@@ -1,0 +1,15 @@
+enum for assigning passengers to specific comapnies
+
+enum: [C1, 10, C2, 10...etc]
+PRM fp3, enum, EnumValue1, 30%, EnumValue2, 70%
+
+
+two enums one for vans, one for companies
+
+if the eunums are equal then passenger can be added to conn list and company can be added to passengers conn list
+
+IN | args: list: List, value: Message/Jid | Begins conditional block if val is in list. Needs matching EBLOCK
+
+SEND | args: rcv: ConnList/Jid | Sends message to rcv. Can only be used inside send_msg actions.
+
+(Message Access) | usage: [MSG].[prm] | Allows to access the value of prm from MSG
