@@ -4,24 +4,33 @@
 MESSAGE VanBelongsToCompany,Request
 PRM companyEnum,float
 EMESSAGE
+
 MESSAGE VanBelongsToCompanyResponse,Request
 PRM belongs,float
 EMESSAGE
+
 MESSAGE VanIsAvailable,Request
 PRM destinationVertex,float
 PRM locationVertex,float
 EMESSAGE
+
 MESSAGE VanIsAvailableResponse,Inform
 PRM available,float
 EMESSAGE
+
 MESSAGE PassengerRequest,Request
 PRM destinationVertex,float
 PRM locationVertex,float
 EMESSAGE
+
 MESSAGE PassengerRequestResponse,Inform
 PRM accepted,float
 EMESSAGE
 
+MESSAGE PassengerChooseVan, Inform
+PRM destinationVertex,float
+PRM locationVertex,float
+EMESSAGE
 
 
 AGENT CompanyAgent
@@ -110,7 +119,8 @@ PRM locationVertex,float,init,0  #TODO: SHOULD BE UNIFORM DIST
 PRM distanceThreshold,float,init,10 #TODO: SHOULD BE UNIFORM DIST
 PRM currentDestinationVertex,float, init,0
 PRM vanMoveDelay,float, init,INITVANMOVEDELAY
-
+PRM carriedPassengers,list,conn
+PRM travellingFlag,float,init,0
 
 BEHAV VanBelongsToCompanySetup,msg_rcv,VanBelongsToCompany,Request
 ACTION ConvertEnumToFloat,modify_self
@@ -172,6 +182,12 @@ EBLOCK
 EACTION
 EBEHAV
 
+BEHAV OnPassengerChooseVan, msg_rcv, PassengerChooseVan, Inform
+ACTION PassengerChoseMe
+SET currentDestinationVertex,RCV.destinationVertex
+ADDE carriedPassengers,RCV.sender
+EACTION
+EBEHAV
 
 
 AGENT PassengerAgent
