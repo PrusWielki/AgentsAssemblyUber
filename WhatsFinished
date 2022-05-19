@@ -10,3 +10,4 @@ CompanyAgent:
 VanAgent:
 1. VanAgent responds with 1 on Companies setup request if it's CompanyEnum equals to the float sent in message, 0 if it's different.
 2. VanAgent responds with 1 on PassengerRequest sent by CompanyAgent if it's distanceThreshold is smaller than the difference between it's locationVertex and requested destinationVertex and also between it's locationVertex and requested locationVertex (the passenger's location)
+3. Van moves towards destinationVertex every vanMoveDelay seconds, thats initialized by macro INITVANMOVEDELAY

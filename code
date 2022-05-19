@@ -1,4 +1,5 @@
 %CONST MESSAGETHRESHOLD, 10
+%CONST INITVANMOVEDELAY, 5
 
 MESSAGE VanBelongsToCompany,Request
 PRM companyEnum,float
@@ -107,7 +108,9 @@ PRM minimalPrice,float,init,0
 PRM companyList,list,conn
 PRM locationVertex,float,init,0  #TODO: SHOULD BE UNIFORM DIST
 PRM distanceThreshold,float,init,10 #TODO: SHOULD BE UNIFORM DIST
-PRM currentDestinationVertex, init,0
+PRM currentDestinationVertex,float, init,0
+PRM vanMoveDelay,float, init,INITVANMOVEDELAY
+
 
 BEHAV VanBelongsToCompanySetup,msg_rcv,VanBelongsToCompany,Request
 ACTION ConvertEnumToFloat,modify_self
@@ -146,7 +149,6 @@ ADD distanceFromDestination, RCV.destinationVertex
 SUBT distanceFromDestination, locationVertex
 SET SEND.available,0
 ILTEQ distanceFromDestination, distanceThreshold
-
 SET distanceFromDestination,0
 ADD distanceFromDestination, RCV.locationVertex
 SUBT distanceFromDestination, locationVertex
@@ -158,6 +160,17 @@ SEND RCV.sender
 EACTION
 EBEHAV
 EAGENT
+
+BEHAV MoveVan, cyclic, vanMoveDelay
+ACTION ChangeVanLocationVertex, modify_self
+IGT currentDestinationVertex, locationVertex
+ADD locationVertex,1
+EBLOCK
+ILT currentDestinationVertex,locationVertex
+SUBT locationVertex,1
+EBLOCK
+EACTION
+EBEHAV
 
 
 
