@@ -184,7 +184,9 @@ EBEHAV
 
 BEHAV OnPassengerChooseVan, msg_rcv, PassengerChooseVan, Inform
 ACTION PassengerChoseMe
+IGT RCV.destinationVertex, currentDestinationVertex
 SET currentDestinationVertex,RCV.destinationVertex
+EBLOCK
 ADDE carriedPassengers,RCV.sender
 EACTION
 EBEHAV
