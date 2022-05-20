@@ -1,0 +1,107 @@
+%CONST NUMBERINTERSECTIONS, 2
+
+MESSAGE SendIntersectionPoint, Inform
+PRM line, float
+PRM vertex, float
+EMESSAGE
+
+MESSAGE RequestIntersectionPoint, Request
+PRM line, float
+PRM vertex, float
+EMESSAGE
+
+AGENT LineAgent
+PRM lineNumber, enum, L0,25, L1,25, L2,25, L3,25
+PRM lineNumberFloat, float, init, 0
+PRM lineLength, float, init, 50
+PRM intersectionVertices, list, float
+PRM intersectionLines, list, float
+
+BEHAV LineSetup, setup
+ACTION ConvertEnumToFloat, modify_self
+IEQ lineNumber, L0
+SET lineNumberFloat, 0
+EBLOCK
+IEQ lineNumber, L1
+SET lineNumberFloat, 1
+EBLOCK
+IEQ lineNumber, L2
+SET lineNumberFloat, 2
+EBLOCK
+IEQ lineNumber, L3
+SET lineNumberFloat, 3
+EBLOCK
+EACTION
+
+ACTION AssignIntersections, modify_self
+DECL counterIntersections, float 0
+DECL even, float 1
+DECL base, float lineNumberFloat
+DECL result, float 1
+ADDE intersectionVertices, 5
+ADDE intersectionVertices, 45
+
+MULT base, -1
+POW result, base, lineNumberFloat
+ILT result, 0
+SET even, 0
+EBLOCK
+IGT result, 0
+SET even, 1
+EBLOCK
+
+IEQ even, 0
+WNEQ counterIntersections, NUMBERINTERSECTIONS
+ADDE intersectionLines, even
+ADD even, 2
+ADD counterIntersections, 1
+EBLOCK
+EBLOCK
+
+IEQ even, 1
+WNEQ counterIntersections, NUMBERINTERSECTIONS
+ADDE intersectionLines, even
+ADD even, 2
+ADD counterIntersections, 1
+EBLOCK
+EBLOCK
+EACTION
+EBEHAV
+
+BEHAV OnRequestIntersectionPoint, msg_rcv, RequestIntersectionPoint, Request
+ACTION RequestIntersectionPointAction, send_msg, SendIntersectionPoint, Inform
+DECL line, float, 0
+DECL vertex, float, 0
+DECL counter, float, 0
+DECL distance, float, 1000
+DECL temp, float, 0
+DECL checkFlag, float, 1
+
+WNEQ counter, NUMBERINTERSECTIONS
+lr line, intersectionLines, counter
+lr vertex, intersectionLines, counter
+IEQ line, RCV.line
+SET SEND.line, line
+SET SEND.vertex, vertex
+SEND RCV.sender
+SET checkFlag, 0
+EBLOCK
+INEQ line, RCV.line
+SET temp, vertex
+SUBT temp, RCV.vertex
+ILT vertex, distance
+SET SEND.line, line
+SET SEND.vertex, vertex
+EBLOCK
+EBLOCK
+ADD counter, 1
+EBLOCK
+IEQ checkFlag, 1
+SEND RCV.sender
+EBLOCK
+EACTION
+EBEHAV
+
+
+
+EAGENT
