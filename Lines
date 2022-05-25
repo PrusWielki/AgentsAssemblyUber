@@ -10,6 +10,9 @@ PRM line, float
 PRM vertex, float
 EMESSAGE
 
+MESSAGE LineBelongsToVan,Request
+EMESSAGE
+
 AGENT LineAgent
 PRM lineNumber, enum, L0,25, L1,25, L2,25, L3,25
 PRM lineNumberFloat, float, init, 0
@@ -58,6 +61,8 @@ ADD counterIntersections, 1
 EBLOCK
 EBLOCK
 
+SET counterIntersections, 0
+
 IEQ even, 1
 WNEQ counterIntersections, NUMBERINTERSECTIONS
 ADDE intersectionLines, even
@@ -65,6 +70,10 @@ ADD even, 2
 ADD counterIntersections, 1
 EBLOCK
 EBLOCK
+EACTION
+
+ACTION PropagateSelf, send_msg, LineBelongsToVan, Request
+SEND connections
 EACTION
 EBEHAV
 
@@ -79,7 +88,7 @@ DECL checkFlag, float, 1
 
 WNEQ counter, NUMBERINTERSECTIONS
 lr line, intersectionLines, counter
-lr vertex, intersectionLines, counter
+lr vertex, intersectionVertices, counter
 IEQ line, RCV.line
 SET SEND.line, line
 SET SEND.vertex, vertex
@@ -101,7 +110,4 @@ SEND RCV.sender
 EBLOCK
 EACTION
 EBEHAV
-
-
-
 EAGENT
