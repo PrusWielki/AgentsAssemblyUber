@@ -348,5 +348,11 @@ EBEHAV
 EAGENT
 
 
-
+GRAPH statistical
+SIZE 40
+DEFG LineAgent, 25%, 39
+DEFG CompanyAgent, 25%, 39
+DEFG VanAgent, 25%, 39
+DEFG PassengerAgent, 25%, 39
+EGRAPH 
 
