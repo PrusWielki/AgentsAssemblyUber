@@ -1,0 +1,352 @@
+%CONST MESSAGETHRESHOLD, 10
+%CONST INITVANMOVEDELAY, 5
+%CONST NUMBERINTERSECTIONS, 2
+
+MESSAGE SendIntersectionPoint, Inform
+PRM line, float
+PRM vertex, float
+EMESSAGE
+
+MESSAGE RequestIntersectionPoint, Request
+PRM line, float
+PRM vertex, float
+EMESSAGE
+
+
+MESSAGE VanBelongsToCompany,Request
+PRM companyEnum,float
+EMESSAGE
+
+MESSAGE VanBelongsToCompanyResponse,Request
+PRM belongs,float
+EMESSAGE
+
+MESSAGE VanIsAvailable,Request
+PRM destinationVertex,float
+PRM locationVertex,float
+EMESSAGE
+
+MESSAGE VanIsAvailableResponse,Inform
+PRM available,float
+EMESSAGE
+
+MESSAGE PassengerRequest,Request
+PRM destinationVertex,float
+PRM locationVertex,float
+EMESSAGE
+
+MESSAGE PassengerRequestResponse,Inform
+PRM accepted,float
+EMESSAGE
+
+MESSAGE PassengerChooseVan, Inform
+PRM destinationVertex,float
+PRM locationVertex,float
+EMESSAGE
+
+MESSAGE LineBelongsToVan,Request
+EMESSAGE
+
+
+AGENT LineAgent
+PRM lineNumber, enum, L0,25, L1,25, L2,25, L3,25
+PRM lineNumberFloat, float, init, 0
+PRM lineLength, float, init, 50
+PRM intersectionVertices, list, float
+PRM intersectionLines, list, float
+
+BEHAV LineSetup, setup
+ACTION ConvertEnumToFloat, modify_self
+IEQ lineNumber, L0
+SET lineNumberFloat, 0
+EBLOCK
+IEQ lineNumber, L1
+SET lineNumberFloat, 1
+EBLOCK
+IEQ lineNumber, L2
+SET lineNumberFloat, 2
+EBLOCK
+IEQ lineNumber, L3
+SET lineNumberFloat, 3
+EBLOCK
+EACTION
+
+ACTION AssignIntersections, modify_self
+DECL counterIntersections, float 0
+DECL even, float 1
+DECL base, float lineNumberFloat
+DECL result, float 1
+ADDE intersectionVertices, 5
+ADDE intersectionVertices, 45
+
+MULT base, -1
+POW result, base, lineNumberFloat
+ILT result, 0
+SET even, 0
+EBLOCK
+IGT result, 0
+SET even, 1
+EBLOCK
+
+IEQ even, 0
+WNEQ counterIntersections, NUMBERINTERSECTIONS
+ADDE intersectionLines, even
+ADD even, 2
+ADD counterIntersections, 1
+EBLOCK
+EBLOCK
+
+SET counterIntersections, 0
+
+IEQ even, 1
+WNEQ counterIntersections, NUMBERINTERSECTIONS
+ADDE intersectionLines, even
+ADD even, 2
+ADD counterIntersections, 1
+EBLOCK
+EBLOCK
+EACTION
+
+ACTION PropagateSelf, send_msg, LineBelongsToVan, Request
+SEND connections
+EACTION
+EBEHAV
+
+BEHAV OnRequestIntersectionPoint, msg_rcv, RequestIntersectionPoint, Request
+ACTION RequestIntersectionPointAction, send_msg, SendIntersectionPoint, Inform
+DECL line, float, 0
+DECL vertex, float, 0
+DECL counter, float, 0
+DECL distance, float, 1000
+DECL temp, float, 0
+DECL checkFlag, float, 1
+
+WNEQ counter, NUMBERINTERSECTIONS
+lr line, intersectionLines, counter
+lr vertex, intersectionVertices, counter
+IEQ line, RCV.line
+SET SEND.line, line
+SET SEND.vertex, vertex
+SEND RCV.sender
+SET checkFlag, 0
+EBLOCK
+INEQ line, RCV.line
+SET temp, vertex
+SUBT temp, RCV.vertex
+ILT vertex, distance
+SET SEND.line, line
+SET SEND.vertex, vertex
+EBLOCK
+EBLOCK
+ADD counter, 1
+EBLOCK
+IEQ checkFlag, 1
+SEND RCV.sender
+EBLOCK
+EACTION
+EBEHAV
+EAGENT
+
+
+AGENT CompanyAgent
+PRM companyId,float,dist,uniform,0,10
+PRM earningRate,float,init,0
+PRM vanList,list,conn
+PRM availableVanList,list,conn
+PRM companyEnum,enum,C1,20,C2,20,C3,20,C4,20,C5,20
+PRM companyEnumFloat,float,init,0
+PRM messageReceivedCount,float,init,0
+PRM messageReceivedCountThreshold,float,init,MESSAGETHRESHOLD
+PRM sendMessageToPassengerFlag,float,init,0
+
+BEHAV VanBelongsToCompanySetup,setup
+ACTION ConvertEnumToFloat,modify_self
+IEQ companyEnum,C1
+SET companyEnumFloat,1
+EBLOCK
+IEQ companyEnum,C2
+SET companyEnumFloat,2
+EBLOCK
+IEQ companyEnum,C3
+SET companyEnumFloat,3
+EBLOCK
+IEQ companyEnum,C4
+SET companyEnumFloat,4
+EBLOCK
+IEQ companyEnum,C5
+SET companyEnumFloat,5
+EBLOCK
+EACTION
+ACTION VanBelongsToCompanyAction,send_msg,VanBelongsToCompany,Request
+SET SEND.companyEnum,companyEnumFloat
+SEND connections
+EACTION
+EBEHAV
+
+BEHAV OnVanBelongsToCompanyResponse,msg_rcv,VanBelongsToCompanyResponse,Request
+ACTION AddVanToList,modify_self
+IEQ RCV.belongs,1
+ADDE vanList,RCV.sender
+EBLOCK
+EACTION
+EBEHAV
+
+BEHAV OnPassengerRequest,msg_rcv,PassengerRequest,Request
+ACTION VanIsAvailableAction,send_msg,VanIsAvailable,Request
+SET SEND.destinationVertex,RCV.destinationVertex
+SET SEND.locationVertex,RCV.locationVertex
+SEND vanList
+EACTION
+ACTION SendResponseToPassenger, send_msg, PassengerRequestResponse, Inform
+SET SEND.accepted,10
+WEQ sendMessageToPassengerFlag,0
+IGTEQ messageReceivedCount, messageReceivedCountThreshold
+SET sendMessageToPassengerFlag,1
+SEND RCV.sender
+EBLOCK
+EBLOCK
+EACTION
+ACTION ResetFlag, modify_self
+SET sendMessageToPassengerFlag,0
+EACTION
+EBEHAV
+
+BEHAV OnVanIsAvailableRespone,msg_rcv,VanIsAvailableResponse,Inform
+ACTION AddAvailableVanToList,modify_self
+IEQ RCV.available,1
+ADD messageReceivedCount,1
+ADDE availableVanList,RCV.sender
+EBLOCK
+EACTION
+EBEHAV
+EAGENT
+
+
+
+AGENT VanAgent
+PRM companyEnum,enum,C1,20,C2,20,C3,20,C4,20,C5,20
+PRM companyEnumFloat,float,init,0
+PRM companyList,list,conn
+
+PRM score,float,init,0
+PRM type,enum,Basic,50,Premium,50
+PRM minimalPrice,float,init,0
+
+PRM locationVertex,float,init,0  #TODO: SHOULD BE UNIFORM DIST
+PRM locationLine, enum, L0,25, L1,25, L2,25, L3,25
+PRM locationLineFloat, float, init, 0
+PRM linesList, list, conn
+PRM distanceThreshold,float,init,10 #TODO: SHOULD BE UNIFORM DIST
+PRM currentDestinationVertex,float, init,0
+PRM currentDestinationLineFloar,float, init,0
+
+PRM vanMoveDelay,float, init,INITVANMOVEDELAY
+PRM carriedPassengers,list,conn
+PRM travellingFlag,float,init,0
+
+BEHAV VanSetup, setup
+ACTION ConvertEnumToFloat, modify_self
+IEQ locationLine, L0
+SET locationLineFloat, 0
+EBLOCK
+IEQ locationLine, L1
+SET locationLineFloat, 1
+EBLOCK
+IEQ locationLine, L2
+SET locationLineFloat, 2
+EBLOCK
+IEQ locationLine, L3
+SET locationLineFloat, 3
+EBLOCK
+EACTION
+EBEHAV
+
+BEHAV VanBelongsToCompanySetup,msg_rcv,VanBelongsToCompany,Request
+ACTION ConvertEnumToFloat,modify_self
+IEQ companyEnum,C1
+SET companyEnumFloat,1
+EBLOCK
+IEQ companyEnum,C2
+SET companyEnumFloat,2
+EBLOCK
+IEQ companyEnum,C3
+SET companyEnumFloat,3
+EBLOCK
+IEQ companyEnum,C4
+SET companyEnumFloat,4
+EBLOCK
+IEQ companyEnum,C5
+SET companyEnumFloat,5
+EBLOCK
+EACTION
+ACTION SendResponse,send_msg,VanBelongsToCompanyResponse,Request
+IEQ RCV.companyEnum,companyEnumFloat
+SET SEND.belongs,1
+ADDE companyList,RCV.sender
+EBLOCK
+INEQ RCV.companyEnum,companyEnumFloat
+SET SEND.belongs,0
+EBLOCK
+SEND RCV.sender
+EACTION
+EBEHAV
+
+BEHAV LineBelongsToVanSetup, msg_rcv, LineBelongsToVan, Request
+ACTION LineBelongsToVanAction, modify_self
+ADDE linesList, RCV.sender
+EACTION
+EBEHAV
+
+BEHAV OnVanIsAvailable,msg_rcv,VanIsAvailable,Request
+ACTION VanIsAvailableAction,send_msg,VanIsAvailableResponse,Inform
+decl distanceFromDestination, float, 0
+ADD distanceFromDestination, RCV.destinationVertex
+SUBT distanceFromDestination, locationVertex
+SET SEND.available,0
+ILTEQ distanceFromDestination, distanceThreshold
+SET distanceFromDestination,0
+ADD distanceFromDestination, RCV.locationVertex
+SUBT distanceFromDestination, locationVertex
+ILTEQ distanceFromDestination, distanceThreshold
+SET SEND.available,1
+EBLOCK
+EBLOCK
+SEND RCV.sender
+EACTION
+EBEHAV
+
+
+BEHAV MoveVan, cyclic, INITVANMOVEDELAY
+ACTION ChangeVanLocationVertex, modify_self
+IGT currentDestinationVertex, locationVertex
+ADD locationVertex,1
+EBLOCK
+ILT currentDestinationVertex,locationVertex
+SUBT locationVertex,1
+EBLOCK
+EACTION
+EBEHAV
+
+BEHAV OnPassengerChooseVan, msg_rcv, PassengerChooseVan, Inform
+ACTION PassengerChoseMe, modify_self
+IGT RCV.destinationVertex, currentDestinationVertex
+SET currentDestinationVertex,RCV.destinationVertex
+EBLOCK
+ADDE carriedPassengers,RCV.sender
+EACTION
+EBEHAV
+EAGENT
+
+
+AGENT PassengerAgent
+PRM asdasd,float,dist,normal,1,1
+BEHAV SendMessage, setup
+ACTION SendMessageToAll,send_msg,PassengerRequest,Request
+SEND connections
+EACTION
+EBEHAV
+EAGENT
+
+
+
+
