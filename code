@@ -32,6 +32,9 @@ PRM destinationVertex,float
 PRM locationVertex,float
 EMESSAGE
 
+MESSAGE LineBelongsToVan,Request
+EMESSAGE
+
 
 AGENT CompanyAgent
 PRM companyId,float,dist,uniform,0,10
@@ -111,16 +114,40 @@ EAGENT
 AGENT VanAgent
 PRM companyEnum,enum,C1,20,C2,20,C3,20,C4,20,C5,20
 PRM companyEnumFloat,float,init,0
+PRM companyList,list,conn
+
 PRM score,float,init,0
 PRM type,enum,Basic,50,Premium,50
 PRM minimalPrice,float,init,0
-PRM companyList,list,conn
+
 PRM locationVertex,float,init,0  #TODO: SHOULD BE UNIFORM DIST
+PRM locationLine, enum, L0,25, L1,25, L2,25, L3,25
+PRM locationLineFloat, float, init, 0
+PRM linesList, list, conn
 PRM distanceThreshold,float,init,10 #TODO: SHOULD BE UNIFORM DIST
 PRM currentDestinationVertex,float, init,0
+PRM currentDestinationLineFloar,float, init,0
+
 PRM vanMoveDelay,float, init,INITVANMOVEDELAY
 PRM carriedPassengers,list,conn
 PRM travellingFlag,float,init,0
+
+BEHAV VanSetup, setup
+ACTION ConvertEnumToFloat, modify_self
+IEQ locationLine, L0
+SET locationLineFloat, 0
+EBLOCK
+IEQ locationLine, L1
+SET locationLineFloat, 1
+EBLOCK
+IEQ locationLine, L2
+SET locationLineFloat, 2
+EBLOCK
+IEQ locationLine, L3
+SET locationLineFloat, 3
+EBLOCK
+EACTION
+EBEHAV
 
 BEHAV VanBelongsToCompanySetup,msg_rcv,VanBelongsToCompany,Request
 ACTION ConvertEnumToFloat,modify_self
@@ -152,6 +179,12 @@ SEND RCV.sender
 EACTION
 EBEHAV
 
+BEHAV LineBelongsToVanSetup, msg_rcv, LineBelongsToVan, Request
+ACTION LineBelongsToVanAction, modify_self
+ADDE linesList, RCV.sender
+EACTION
+EBEHAV
+
 BEHAV OnVanIsAvailable,msg_rcv,VanIsAvailable,Request
 ACTION VanIsAvailableAction,send_msg,VanIsAvailableResponse,Inform
 decl distanceFromDestination, float, 0
@@ -169,9 +202,9 @@ EBLOCK
 SEND RCV.sender
 EACTION
 EBEHAV
-EAGENT
 
-BEHAV MoveVan, cyclic, vanMoveDelay
+
+BEHAV MoveVan, cyclic, INITVANMOVEDELAY
 ACTION ChangeVanLocationVertex, modify_self
 IGT currentDestinationVertex, locationVertex
 ADD locationVertex,1
@@ -183,13 +216,14 @@ EACTION
 EBEHAV
 
 BEHAV OnPassengerChooseVan, msg_rcv, PassengerChooseVan, Inform
-ACTION PassengerChoseMe
+ACTION PassengerChoseMe, modify_self
 IGT RCV.destinationVertex, currentDestinationVertex
 SET currentDestinationVertex,RCV.destinationVertex
 EBLOCK
 ADDE carriedPassengers,RCV.sender
 EACTION
 EBEHAV
+EAGENT
 
 
 AGENT PassengerAgent
