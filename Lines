@@ -97,10 +97,11 @@ SET checkFlag, 0
 EBLOCK
 INEQ line, RCV.line
 SET temp, vertex
-SUBT temp, RCV.vertex
-ILT vertex, distance
+SUBT temp, RCV.vertex # modulo
+ILT temp, distance
 SET SEND.line, line
 SET SEND.vertex, vertex
+SET distance, temp
 EBLOCK
 EBLOCK
 ADD counter, 1

@@ -19,12 +19,22 @@ PRM available,float
 EMESSAGE
 
 MESSAGE PassengerRequest,Request
-PRM destinationVertex,float
-PRM locationVertex,float
+PRM destinationLine, float
+PRM destinationVertex, float
+PRM locationVertex, float
+PRM locationLine, float
+EMESSAGE
+
+MESSAGE PassengerBookVan,Request
+PRM destinationLine, float
+PRM destinationVertex, float
+PRM locationVertex, float
+PRM locationLine, float
 EMESSAGE
 
 MESSAGE PassengerRequestResponse,Inform
 PRM accepted,float
+PRM vanId, float # later jid type
 EMESSAGE
 
 MESSAGE PassengerChooseVan, Inform
@@ -86,7 +96,7 @@ SET SEND.locationVertex,RCV.locationVertex
 SEND vanList
 EACTION
 ACTION SendResponseToPassenger, send_msg, PassengerRequestResponse, Inform
-SET SEND.accepted,10
+SET SEND.accepted,10 # later add van jid to message body
 WEQ sendMessageToPassengerFlag,0
 IGTEQ messageReceivedCount, messageReceivedCountThreshold
 SET sendMessageToPassengerFlag,1
@@ -227,11 +237,73 @@ EAGENT
 
 
 AGENT PassengerAgent
-PRM asdasd,float,dist,normal,1,1
-BEHAV SendMessage, setup
-ACTION SendMessageToAll,send_msg,PassengerRequest,Request
+PRM locationLine, enum, L0,25, L1,25, L2,25, L3,25
+PRM locationLineFloat, float, init, 0
+PRM locationVertex, float, dist, uniform, 0, 50 # must be int here
+PRM destinationLine, enum, L0,25, L1,25, L2,25, L3,25
+PRM destinationLineFloat, float, init, 0 # must be int here
+PRM destinationVertex, float, dist, uniform, 0, 50
+
+BEHAV PassengerSetup, setup
+ACTION ConvertEnumToFloat, modify_self
+IEQ locationLine, L0
+SET locationLineFloat, 0
+EBLOCK
+IEQ locationLine, L1
+SET locationLineFloat, 1
+EBLOCK
+IEQ locationLine, L2
+SET locationLineFloat, 2
+EBLOCK
+IEQ locationLine, L3
+SET locationLineFloat, 3
+EBLOCK
+
+IEQ destinationLine, L0
+SET destinationLineFloat, 0
+EBLOCK
+IEQ destinationLine, L1
+SET destinationLineFloat, 1
+EBLOCK
+IEQ destinationLine, L2
+SET destinationLineFloat, 2
+EBLOCK
+IEQ destinationLine, L3
+SET destinationLineFloat, 3
+EBLOCK
+EACTION
+
+ACTION SendMessageToAll, send_msg, PassengerRequest, Request
+SET SEND.destinationLine, destinationLineFloat
+SET SEND.destinationVertex, destinationVertex
+SET SEND.locationLine, locationLineFloat
+SET SEND.locationVertex, locationVertex
 SEND connections
 EACTION
+EBEHAV
+
+BEHAV OnOffersReceive, msg_rcv, PassengerRequestResponse, Inform
+INEQ RCV.accepted, 0
+ACTION SendMessageToVan, send_msg, PassengerBookVan, Request
+SET SEND.destinationLine, destinationLineFloat
+SET SEND.destinationVertex, destinationVertex
+SET SEND.locationLine, locationLineFloat
+SET SEND.locationVertex, locationVertex
+SEND RCV.sender
+
+## add logic to accept final offer from van
+EACTION
+EBLOCK
+
+IEQ RCV.accepted, 0
+ACTION SendMessageToAll, send_msg, PassengerRequest, Request
+SET SEND.destinationLine, destinationLineFloat
+SET SEND.destinationVertex, destinationVertex
+SET SEND.locationLine, locationLineFloat
+SET SEND.locationVertex, locationVertex
+SEND connections
+EACTION
+EBLOCK
 EBEHAV
 EAGENT
 
