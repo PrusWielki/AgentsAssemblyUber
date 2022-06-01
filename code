@@ -1,6 +1,7 @@
 %CONST MESSAGETHRESHOLD, 10
 %CONST INITVANMOVEDELAY, 5
 %CONST MAXPASSENGERS, 5
+%CONST INITPRICEPERVERTEX, 2
 
 MESSAGE VanBelongsToCompany,Request
 PRM companyEnum,float
@@ -161,6 +162,9 @@ PRM vanMoveDelay,float, init,INITVANMOVEDELAY
 PRM carriedPassengers,list,conn
 PRM maxPassengers, float, init, MAXPASSENGERS
 PRM travellingFlag,float,init,0
+
+
+PRM pricePerVertex,float, init, INITPRICEPERVERTEX
 
 BEHAV VanSetup, setup
 ACTION ConvertEnumToFloat, modify_self
