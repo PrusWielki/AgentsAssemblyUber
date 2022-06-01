@@ -136,12 +136,12 @@ ADDE availableVanList,RCV.sender
 EBLOCK
 EACTION
 EBEHAV
-EAGENT
+
 
 
 BEHAV OnVanGotToDestination, msg_rcv, VanGotToDestination, Inform
 
-ACTION ModifyEarningRate
+ACTION ModifyEarningRate, modify_self
 decl newEarningRate,float,RCV.earning
 DIV newEarningRate,RCV.passengersTravelled
 IGT newEarningRate, earningRate
@@ -149,6 +149,10 @@ SET earningRate, newEarningRate
 EBLOCK
 EACTION
 EBEHAV
+
+EAGENT
+
+
 
 
 AGENT VanAgent
@@ -326,27 +330,31 @@ EACTION
 EBEHAV
 
 BEHAV OnOffersReceive, msg_rcv, PassengerRequestResponse, Inform
-INEQ RCV.accepted, 0
+
 ACTION SendMessageToVan, send_msg, PassengerBookVan, Request
+INEQ RCV.accepted, 0
 SET SEND.destinationLine, destinationLineFloat
 SET SEND.destinationVertex, destinationVertex
 SET SEND.locationLine, locationLineFloat
 SET SEND.locationVertex, locationVertex
-SEND RCV.sender
 
+SEND RCV.sender
+EBLOCK
 ##TODO: add logic to accept final offer from van
 EACTION
-EBLOCK
 
-IEQ RCV.accepted, 0
+
+
 ACTION SendMessageToAll, send_msg, PassengerRequest, Request
+IEQ RCV.accepted, 0
 SET SEND.destinationLine, destinationLineFloat
 SET SEND.destinationVertex, destinationVertex
 SET SEND.locationLine, locationLineFloat
 SET SEND.locationVertex, locationVertex
 SEND connections
-EACTION
 EBLOCK
+EACTION
+
 EBEHAV
 
 
@@ -358,7 +366,7 @@ SET locationVertex,RCV.locationVertex
 EACTION
 
 ACTION CheckIfAtDestination, send_msg, PassengerAtDestination, Inform
-IEQ locationLineFloat, destinationLine
+IEQ locationLineFloat, destinationLineFloat
 IEQ locationVertex, destinationVertex
 SET SEND.atDestination,0
 SET SEND.score,0
