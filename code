@@ -127,7 +127,7 @@ PRM companyEnum,enum,C1,20,C2,20,C3,20,C4,20,C5,20
 PRM companyEnumFloat,float,init,0
 PRM companyList,list,conn
 
-PRM score,float,init,0
+PRM score,float,init,10
 PRM type,enum,Basic,50,Premium,50
 PRM minimalPrice,float,init,0
 
