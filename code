@@ -52,12 +52,13 @@ PRM earning,float
 PRM passengersTravelled, float
 EMESSAGE
 
-MESSAGE PassengerAtDestination
+MESSAGE PassengerAtDestination, Inform
+PRM atDestination, float
 PRM score,float
 PRM pricePaid,float
 EMESSAGE
 
-MESSAGE MoveVanNewPassengerLocation
+MESSAGE MoveVanNewPassengerLocation, Inform
 PRM locationVertex,float
 PRM locationLine,float
 EMESSAGE
@@ -333,7 +334,7 @@ SET SEND.locationLine, locationLineFloat
 SET SEND.locationVertex, locationVertex
 SEND RCV.sender
 
-## add logic to accept final offer from van
+##TODO: add logic to accept final offer from van
 EACTION
 EBLOCK
 
@@ -347,6 +348,29 @@ SEND connections
 EACTION
 EBLOCK
 EBEHAV
+
+
+BEHAV OnMoveVanNewPassengerLocation, msg_rcv, MoveVanNewPassengerLocation, Inform
+
+ACTION ChangeLocation, modify_self
+SET locationLineFloat,RCV.locationLine
+SET locationVertex,RCV.locationVertex
+EACTION
+
+ACTION CheckIfAtDestination, send_msg, PassengerAtDestination, Inform
+IEQ locationLineFloat, destinationLine
+IEQ locationVertex, destinationVertex
+SET SEND.atDestination,0
+SET SEND.score,0
+SET SEND.pricePaid,0
+## TODO: Increase price per move, VanAgent needs to send to PassengerAgent price per move, then it needs to be stored in PassengerAgent and added here
+EBLOCK
+EBLOCK
+SEND RCV.sender
+EACTION
+EBEHAV
+
+
 EAGENT
 
 
