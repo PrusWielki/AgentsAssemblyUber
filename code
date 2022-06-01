@@ -1,5 +1,6 @@
 %CONST MESSAGETHRESHOLD, 10
 %CONST INITVANMOVEDELAY, 5
+%CONST MAXPASSENGERS, 5
 
 MESSAGE VanBelongsToCompany,Request
 PRM companyEnum,float
@@ -100,8 +101,8 @@ SET SEND.accepted,10 # later add van jid to message body
 WEQ sendMessageToPassengerFlag,0
 IGTEQ messageReceivedCount, messageReceivedCountThreshold
 SET sendMessageToPassengerFlag,1
-SEND RCV.sender
 EBLOCK
+SEND RCV.sender
 EBLOCK
 EACTION
 ACTION ResetFlag, modify_self
@@ -133,13 +134,15 @@ PRM minimalPrice,float,init,0
 PRM locationVertex,float,init,0  #TODO: SHOULD BE UNIFORM DIST
 PRM locationLine, enum, L0,25, L1,25, L2,25, L3,25
 PRM locationLineFloat, float, init, 0
+PRM destinationLineFloat, float, init, 0
 PRM linesList, list, conn
 PRM distanceThreshold,float,init,10 #TODO: SHOULD BE UNIFORM DIST
 PRM currentDestinationVertex,float, init,0
-PRM currentDestinationLineFloar,float, init,0
+PRM currentDestinationLineFloat,float, init,0
 
 PRM vanMoveDelay,float, init,INITVANMOVEDELAY
 PRM carriedPassengers,list,conn
+PRM maxPassengers, float, init, MAXPASSENGERS
 PRM travellingFlag,float,init,0
 
 BEHAV VanSetup, setup
@@ -240,9 +243,17 @@ AGENT PassengerAgent
 PRM locationLine, enum, L0,25, L1,25, L2,25, L3,25
 PRM locationLineFloat, float, init, 0
 PRM locationVertex, float, dist, uniform, 0, 50 # must be int here
+
 PRM destinationLine, enum, L0,25, L1,25, L2,25, L3,25
 PRM destinationLineFloat, float, init, 0 # must be int here
 PRM destinationVertex, float, dist, uniform, 0, 50
+
+PRM pricePreference, float,init, 0 #TODO: unifrom dist
+PRM scorePreference, float,init, 0 #TODO: unifrom dist
+
+PRM isTravelling, float,init,0
+PRM availableVanList, list, conn
+
 
 BEHAV PassengerSetup, setup
 ACTION ConvertEnumToFloat, modify_self
