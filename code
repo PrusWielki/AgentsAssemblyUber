@@ -46,6 +46,11 @@ EMESSAGE
 MESSAGE LineBelongsToVan,Request
 EMESSAGE
 
+MESSAGE VanGotToDestination, Inform
+PRM earning,float
+PRM passengersTravelled, float
+EMESSAGE
+
 
 AGENT CompanyAgent
 PRM companyId,float,dist,uniform,0,10
@@ -97,12 +102,13 @@ SET SEND.locationVertex,RCV.locationVertex
 SEND vanList
 EACTION
 ACTION SendResponseToPassenger, send_msg, PassengerRequestResponse, Inform
-SET SEND.accepted,10 # later add van jid to message body
+SET SEND.accepted,1 
 WEQ sendMessageToPassengerFlag,0
 IGTEQ messageReceivedCount, messageReceivedCountThreshold
 SET sendMessageToPassengerFlag,1
-EBLOCK
+#TODO: add availableVanList to message body
 SEND RCV.sender
+EBLOCK
 EBLOCK
 EACTION
 ACTION ResetFlag, modify_self
@@ -120,6 +126,17 @@ EACTION
 EBEHAV
 EAGENT
 
+
+BEHAV OnVanGotToDestination, msg_rcv, VanGotToDestination, Inform
+
+ACTION ModifyEarningRate
+decl newEarningRate,float,RCV.earning
+DIV newEarningRate,RCV.passengersTravelled
+IGT newEarningRate, earningRate
+SET earningRate, newEarningRate
+EBLOCK
+EACTION
+EBEHAV
 
 
 AGENT VanAgent
