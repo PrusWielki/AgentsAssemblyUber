@@ -52,6 +52,16 @@ PRM earning,float
 PRM passengersTravelled, float
 EMESSAGE
 
+MESSAGE PassengerAtDestination
+PRM score,float
+PRM pricePaid,float
+EMESSAGE
+
+MESSAGE MoveVanNewPassengerLocation
+PRM locationVertex,float
+PRM locationLine,float
+EMESSAGE
+
 
 AGENT CompanyAgent
 PRM companyId,float,dist,uniform,0,10
