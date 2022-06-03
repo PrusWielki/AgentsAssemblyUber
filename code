@@ -12,22 +12,23 @@ PRM belongs,float
 EMESSAGE
 
 MESSAGE VanIsAvailable,Request
+PRM destinationLine, float
 PRM destinationVertex,float
 PRM locationVertex,float
+PRM locationLine, float
 EMESSAGE
 
 MESSAGE VanIsAvailableResponse,Inform
 PRM available,float
 EMESSAGE
 
-MESSAGE PassengerRequest,Request
-PRM destinationLine, float
-PRM destinationVertex, float
-PRM locationVertex, float
-PRM locationLine, float
+MESSAGE VanFree, Inform
 EMESSAGE
 
-MESSAGE PassengerBookVan,Request
+MESSAGE VanFull, Inform
+EMESSAGE
+
+MESSAGE PassengerRequest, Request
 PRM destinationLine, float
 PRM destinationVertex, float
 PRM locationVertex, float
@@ -35,14 +36,46 @@ PRM locationLine, float
 EMESSAGE
 
 MESSAGE PassengerRequestResponse,Inform
-PRM accepted,float
-PRM vanId, float # later jid type
+PRM accepted, float
+PRM vanId, float # TODO: later jid
+PRM price, float
+PRM distance, float
+PRM travelTime, float
+PRM score, float
 EMESSAGE
 
-MESSAGE PassengerChooseVan, Inform
-PRM destinationVertex,float
-PRM locationVertex,float
+MESSAGE PassengerBookVan, Request
+PRM destinationLine, float
+PRM destinationVertex, float
+PRM locationVertex, float
+PRM locationLine, float
 EMESSAGE
+
+MESSAGE PassengerBookVanResponse, Inform
+PRM accepted, float
+EMESSAGE
+
+MESSAGE SendConfirmationToVan, Inform
+EMESSAGE
+
+MESSAGE SendRefusalToVan, Inform
+EMESSAGE
+
+MESSAGE AcceptNewPassenger, Request
+PRM additionalTime, float
+PRM reducedPrice, float
+EMESSAGE
+
+MESSAGE SendConfirmationToVanAboutNewPassenger, Inform
+EMESSAGE
+
+MESSAGE SendRefusalToVanAboutNewPassenger, Inform
+EMESSAGE
+
+# MESSAGE PassengerChooseVan, Inform
+# PRM destinationVertex,float
+# PRM locationVertex,float
+# EMESSAGE
 
 MESSAGE LineBelongsToVan,Request
 EMESSAGE
@@ -54,8 +87,8 @@ EMESSAGE
 
 MESSAGE PassengerAtDestination, Inform
 PRM atDestination, float
-PRM score,float
-PRM pricePaid,float
+PRM score, float
+PRM pricePaid, float
 EMESSAGE
 
 MESSAGE MoveVanNewPassengerLocation, Inform
@@ -65,18 +98,18 @@ EMESSAGE
 
 
 AGENT CompanyAgent
-PRM companyId,float,dist,uniform,0,10
-PRM earningRate,float,init,0
-PRM vanList,list,conn
-PRM availableVanList,list,conn
-PRM companyEnum,enum,C1,20,C2,20,C3,20,C4,20,C5,20
-PRM companyEnumFloat,float,init,0
-PRM messageReceivedCount,float,init,0
-PRM messageReceivedCountThreshold,float,init,MESSAGETHRESHOLD
-PRM sendMessageToPassengerFlag,float,init,0
+PRM companyId, float, dist, uniform, 0, 10
+PRM earningRate, float, init, 0
+PRM vanList, list, conn
+PRM availableVanList, list, conn
+PRM companyEnum, enum, C1, 20, C2, 20, C3, 20, C4, 20, C5, 20
+PRM companyEnumFloat, float, init, 0
+PRM messageReceivedCount, float, init, 0
+PRM messageReceivedCountThreshold, float, init, MESSAGETHRESHOLD
+PRM sendMessageToPassengerFlag, float, init, 0
 
-BEHAV VanBelongsToCompanySetup,setup
-ACTION ConvertEnumToFloat,modify_self
+BEHAV VanBelongsToCompanySetup, setup
+ACTION ConvertEnumToFloat, modify_self
 IEQ companyEnum,C1
 SET companyEnumFloat,1
 EBLOCK
@@ -107,10 +140,14 @@ EBLOCK
 EACTION
 EBEHAV
 
+#----------------------------------------------------------------------------------------------
+# we will do it in a different way, so the code below probably could be deleted
 BEHAV OnPassengerRequest,msg_rcv,PassengerRequest,Request
 ACTION VanIsAvailableAction,send_msg,VanIsAvailable,Request
 SET SEND.destinationVertex,RCV.destinationVertex
+SET SEND.destinationLine,RCV.destinationLine
 SET SEND.locationVertex,RCV.locationVertex
+SET SEND.locationLine,RCV.locationLine
 SEND vanList
 EACTION
 ACTION SendResponseToPassenger, send_msg, PassengerRequestResponse, Inform
@@ -136,11 +173,65 @@ ADDE availableVanList,RCV.sender
 EBLOCK
 EACTION
 EBEHAV
+#----------------------------------------------------------------------------------------------
+
+BEHAV OnVanIsFree, msg_rcv, VanFree, Inform
+ACTION AddVanToList, modify_self
+ADDE availableVanList, RCV.sender
+EACTION
+EBEHAV
+
+BEHAV OnVanIsFull, msg_rcv, VanFull, Inform
+ACTION DeleteVanFromList, modify_self
+DECL counter, float, 0
+DECL listElement, conn, "test"
+DECL listLength, float, 0
+LEN listLength, availableVanList
+WNEQ counter, listLength
+LR listElement, availableVanList, counter
+IEQ listElement, RCV.sender
+REME availableVanList, listElement
+EBLOCK
+ADD counter, 1
+EBLOCK
+EACTION
+EBEHAV
+
+BEHAV OnPassengerRequest, msg_rcv, PassengerRequest, Request
+ACTION SendResponseToPassenger, send_msg, PassengerRequestResponse, Inform
+DECL listLength, float, 0
+DECL listElement, conn, "test"
+DECL randomNumber, float, 0
+LEN listLength, availableVanList
+
+IEQ listLength, 0
+SET SEND.accepted, 0
+SET SEND.vanId, 0
+SET SEND.price, 0
+SET SEND.distance, 0
+SET SEND.travelTime, 0
+SET SEND.score, 0
+EBLOCK
+
+IGT listLength, 0
+RAND randomNumber, int, uniform, 0, listLength
+LR listElement, availableVanList, randomNumber
+SET SEND.accepted, 1
+SET SEND.vanId, listElement
+SET SEND.price, 1 # TODO: change parameters to real ones
+SET SEND.distance, 1 # TODO: change parameters to real ones
+SET SEND.travelTime, 1 # TODO: change parameters to real ones
+SET SEND.score, 1 # TODO: change parameters to real ones
+EBLOCK
+
+EACTION
+EBEHAV
+
+
 
 
 
 BEHAV OnVanGotToDestination, msg_rcv, VanGotToDestination, Inform
-
 ACTION ModifyEarningRate, modify_self
 decl newEarningRate,float,RCV.earning
 DIV newEarningRate,RCV.passengersTravelled
@@ -234,6 +325,7 @@ ADDE linesList, RCV.sender
 EACTION
 EBEHAV
 
+#-----------------------------------------------------------------------------------------------------
 BEHAV OnVanIsAvailable,msg_rcv,VanIsAvailable,Request
 ACTION VanIsAvailableAction,send_msg,VanIsAvailableResponse,Inform
 decl distanceFromDestination, float, 0
@@ -251,7 +343,7 @@ EBLOCK
 SEND RCV.sender
 EACTION
 EBEHAV
-
+#-----------------------------------------------------------------------------------------------------
 
 BEHAV MoveVan, cyclic, INITVANMOVEDELAY
 ACTION ChangeVanLocationVertex, modify_self
@@ -264,6 +356,7 @@ EBLOCK
 EACTION
 EBEHAV
 
+#-----------------------------------------------------------------------------------------------------
 BEHAV OnPassengerChooseVan, msg_rcv, PassengerChooseVan, Inform
 ACTION PassengerChoseMe, modify_self
 IGT RCV.destinationVertex, currentDestinationVertex
@@ -273,23 +366,24 @@ ADDE carriedPassengers,RCV.sender
 EACTION
 EBEHAV
 EAGENT
-
+#-----------------------------------------------------------------------------------------------------
 
 AGENT PassengerAgent
 PRM locationLine, enum, L0,25, L1,25, L2,25, L3,25
 PRM locationLineFloat, float, init, 0
-PRM locationVertex, float, dist, uniform, 0, 50 # must be int here
+PRM locationVertex, float, dist, uniform, 0, 50 #TODO: must be int here
 
 PRM destinationLine, enum, L0,25, L1,25, L2,25, L3,25
-PRM destinationLineFloat, float, init, 0 # must be int here
+PRM destinationLineFloat, float, init, 0 #TODO: must be int here
 PRM destinationVertex, float, dist, uniform, 0, 50
 
-PRM pricePreference, float,init, 0 #TODO: unifrom dist
-PRM scorePreference, float,init, 0 #TODO: unifrom dist
+PRM pricePreference, float, init, 0 #TODO: unifrom dist
+PRM scorePreference, float, init, 0 #TODO: unifrom dist
 
-PRM isTravelling, float,init,0
-PRM availableVanList, list, conn
+PRM isTravelling, float, init,0
+PRM availableVan, list, conn
 
+PRM randomDecider, float, dist, uniform, 0, 1 #TODO: must be int
 
 BEHAV PassengerSetup, setup
 ACTION ConvertEnumToFloat, modify_self
@@ -329,21 +423,29 @@ SEND connections
 EACTION
 EBEHAV
 
-BEHAV OnOffersReceive, msg_rcv, PassengerRequestResponse, Inform
-
+BEHAV OnOfferFromCompanyReceive, msg_rcv, PassengerRequestResponse, Inform
 ACTION SendMessageToVan, send_msg, PassengerBookVan, Request
-INEQ RCV.accepted, 0
+DECL acceptFlag, float, 0
+DECL pricePerVertex, float, 0
+IEQ RCV.accepted, 1
+SET pricePerVertex, RCV.price
+DIV pricePerVertex, RCV.distance
+IGTEQ RCV.score, 3
+SET acceptFlag, 1
+EBLOCK
+ILTEQ pricePerVertex, 1
+SET acceptFlag, 1
+EBLOCK
+IEQ acceptFlag, 1
+ADDE availableVan, RCV.vanId
 SET SEND.destinationLine, destinationLineFloat
 SET SEND.destinationVertex, destinationVertex
 SET SEND.locationLine, locationLineFloat
 SET SEND.locationVertex, locationVertex
-
-SEND RCV.sender
+SEND availableVan
 EBLOCK
-##TODO: add logic to accept final offer from van
+EBLOCK
 EACTION
-
-
 
 ACTION SendMessageToAll, send_msg, PassengerRequest, Request
 IEQ RCV.accepted, 0
@@ -354,23 +456,49 @@ SET SEND.locationVertex, locationVertex
 SEND connections
 EBLOCK
 EACTION
+EBEHAV
 
+BEHAV OnOfferFromVanReceive, msg_rcv, PassengerBookVanResponse, Inform
+ACTION SendConfirmation, send_msg, SendConfirmationToVan, Inform
+IEQ RCV.accepted, 1
+IGTEQ randomDecider, 0.5
+send RCV.sender
+EBLOCK
+EBLOCK
+EACTION
+
+ACTION SendRefusal, send_msg, SendRefusalToVan, Inform
+IEQ RCV.accepted, 1
+ILT randomDecider, 0.5
+send RCV.sender
+EBLOCK
+EBLOCK
+EACTION
+
+ACTION SendMessageToAll, send_msg, PassengerRequest, Request
+IEQ RCV.accepted, 0
+SET SEND.destinationLine, destinationLineFloat
+SET SEND.destinationVertex, destinationVertex
+SET SEND.locationLine, locationLineFloat
+SET SEND.locationVertex, locationVertex
+SEND connections
+EBLOCK
+EACTION
 EBEHAV
 
 
 BEHAV OnMoveVanNewPassengerLocation, msg_rcv, MoveVanNewPassengerLocation, Inform
-
 ACTION ChangeLocation, modify_self
-SET locationLineFloat,RCV.locationLine
-SET locationVertex,RCV.locationVertex
+SET locationLineFloat, RCV.locationLine
+SET locationVertex, RCV.locationVertex
 EACTION
 
 ACTION CheckIfAtDestination, send_msg, PassengerAtDestination, Inform
 IEQ locationLineFloat, destinationLineFloat
 IEQ locationVertex, destinationVertex
-SET SEND.atDestination,0
-SET SEND.score,0
-SET SEND.pricePaid,0
+SET SEND.atDestination, 0
+SET SEND.score, 0
+SET SEND.pricePaid, 0
 ## TODO: Increase price per move, VanAgent needs to send to PassengerAgent price per move, then it needs to be stored in PassengerAgent and added here
 EBLOCK
 EBLOCK
@@ -378,7 +506,25 @@ SEND RCV.sender
 EACTION
 EBEHAV
 
+BEHAV OnAcceptNewPassenger, msg_rcv, AcceptNewPassenger, Inform
+ACTION SendConfirmation, send_msg, SendConfirmationToVanAboutNewPassenger, Inform
+DECL decider, flaot, 0
+SET decider, RCV.additionalTime
+DIV decider, RCV.reducedPrice
+ILTEQ decider, 1 #TODO: maybe we can randomize it in the future
+SEND RCV.sender
+EBLOCK
+EACTION
 
+ACTION SendRefusal, send_msg, SendRefusalToVanAboutNewPassenger, Inform
+DECL decider, flaot, 0
+SET decider, RCV.additionalTime
+DIV decider, RCV.reducedPrice
+IGT decider, 1 #TODO: maybe we can randomize it in the future
+SEND RCV.sender
+EBLOCK
+EACTION
+EBEHAV
 EAGENT
 
 
