@@ -2,6 +2,7 @@
 %CONST INITVANMOVEDELAY, 5
 %CONST MAXPASSENGERS, 5
 %CONST INITPRICEPERVERTEX, 2
+%CONST CYCLICCHECK, 1
 
 MESSAGE VanBelongsToCompany, Request
 PRM companyEnum, float
@@ -11,19 +12,19 @@ MESSAGE VanBelongsToCompanyResponse, Request
 PRM belongs, float
 EMESSAGE
 
-# MESSAGE VanIsAvailable,Request
+# MESSAGE VanIsAvailable, Request
 # PRM destinationLine, float
-# PRM destinationVertex,float
-# PRM locationVertex,float
+# PRM destinationVertex, float
+# PRM locationVertex, float
 # PRM locationLine, float
 # EMESSAGE
 
-# MESSAGE VanIsAvailableResponse,Inform
-# PRM available,float
+# MESSAGE VanIsAvailableResponse, Inform
+# PRM available, float
 # EMESSAGE
 
-MESSAGE VanFree, Inform
-EMESSAGE
+# MESSAGE VanFree, Inform
+# EMESSAGE
 
 MESSAGE VanFull, Inform
 EMESSAGE
@@ -35,13 +36,9 @@ PRM locationVertex, float
 PRM locationLineFloat, float
 EMESSAGE
 
-MESSAGE PassengerRequestResponse,Inform
+MESSAGE PassengerRequestResponse, Inform
 PRM accepted, float
-PRM vanId, conn # TODO: later jid
-PRM price, float
-PRM distance, float
-PRM travelTime, float
-PRM score, float
+PRM vanId, conn
 EMESSAGE
 
 MESSAGE PassengerBookVan, Request
@@ -53,6 +50,10 @@ EMESSAGE
 
 MESSAGE PassengerBookVanResponse, Inform
 PRM accepted, float
+PRM price, float
+PRM distance, float
+PRM travelTime, float
+PRM score, float
 EMESSAGE
 
 MESSAGE SendConfirmationToVan, Inform
@@ -73,8 +74,8 @@ MESSAGE SendRefusalToVanAboutNewPassenger, Inform
 EMESSAGE
 
 # MESSAGE PassengerChooseVan, Inform
-# PRM destinationVertex,float
-# PRM locationVertex,float
+# PRM destinationVertex, float
+# PRM locationVertex, float
 # EMESSAGE
 
 MESSAGE LineBelongsToVan, Request
@@ -113,76 +114,77 @@ PRM sendMessageToPassengerFlag, float, init, 0
 
 BEHAV VanBelongsToCompanySetup, setup
 ACTION ConvertEnumToFloat, modify_self
-IEQ companyEnum,C1
-SET companyEnumFloat,1
+IEQ companyEnum, C1
+SET companyEnumFloat, 1
 EBLOCK
-IEQ companyEnum,C2
-SET companyEnumFloat,2
+IEQ companyEnum, C2
+SET companyEnumFloat, 2
 EBLOCK
-IEQ companyEnum,C3
-SET companyEnumFloat,3
+IEQ companyEnum, C3
+SET companyEnumFloat, 3
 EBLOCK
-IEQ companyEnum,C4
-SET companyEnumFloat,4
+IEQ companyEnum, C4
+SET companyEnumFloat, 4
 EBLOCK
-IEQ companyEnum,C5
-SET companyEnumFloat,5
+IEQ companyEnum, C5
+SET companyEnumFloat, 5
 EBLOCK
 EACTION
-ACTION VanBelongsToCompanyAction,send_msg,VanBelongsToCompany,Request
-SET SEND.companyEnum,companyEnumFloat
+ACTION VanBelongsToCompanyAction, send_msg, VanBelongsToCompany, Request
+SET SEND.companyEnum, companyEnumFloat
 SEND connections
 EACTION
 EBEHAV
 
-BEHAV OnVanBelongsToCompanyResponse,msg_rcv,VanBelongsToCompanyResponse,Request
-ACTION AddVanToList,modify_self
-IEQ RCV.belongs,1
-ADDE vanList,RCV.sender
+BEHAV OnVanBelongsToCompanyResponse, msg_rcv, VanBelongsToCompanyResponse, Request
+ACTION AddVanToList, modify_self
+IEQ RCV.belongs, 1
+ADDE vanList, RCV.sender
+ADDE availableVanList, RCV.sender
 EBLOCK
 EACTION
 EBEHAV
 
 #----------------------------------------------------------------------------------------------
 # we will do it in a different way, so the code below probably could be deleted
-# BEHAV OnPassengerRequest,msg_rcv,PassengerRequest,Request
-# ACTION VanIsAvailableAction,send_msg,VanIsAvailable,Request
-# SET SEND.destinationVertex,RCV.destinationVertex
-# SET SEND.destinationLine,RCV.destinationLine
-# SET SEND.locationVertex,RCV.locationVertex
-# SET SEND.locationLine,RCV.locationLine
+# BEHAV OnPassengerRequest, msg_rcv, PassengerRequest, Request
+# ACTION VanIsAvailableAction, send_msg, VanIsAvailable, Request
+# SET SEND.destinationVertex, RCV.destinationVertex
+# SET SEND.destinationLine, RCV.destinationLine
+# SET SEND.locationVertex, RCV.locationVertex
+# SET SEND.locationLine, RCV.locationLine
 # SEND vanList
 # EACTION
 # ACTION SendResponseToPassenger, send_msg, PassengerRequestResponse, Inform
-# SET SEND.accepted,1 
-# WEQ sendMessageToPassengerFlag,0
+# SET SEND.accepted, 1 
+# WEQ sendMessageToPassengerFlag, 0
 # IGTEQ messageReceivedCount, messageReceivedCountThreshold
-# SET sendMessageToPassengerFlag,1
+# SET sendMessageToPassengerFlag, 1
 #TODO: add availableVanList to message body
 # SEND RCV.sender
 # EBLOCK
 # EBLOCK
 # EACTION
 # ACTION ResetFlag, modify_self
-# SET sendMessageToPassengerFlag,0
+# SET sendMessageToPassengerFlag, 0
 # EACTION
 # EBEHAV
 
-# BEHAV OnVanIsAvailableRespone,msg_rcv,VanIsAvailableResponse,Inform
-# ACTION AddAvailableVanToList,modify_self
-# IEQ RCV.available,1
-# ADD messageReceivedCount,1
-# ADDE availableVanList,RCV.sender
+# BEHAV OnVanIsAvailableRespone, msg_rcv, VanIsAvailableResponse, Inform
+# ACTION AddAvailableVanToList, modify_self
+# IEQ RCV.available, 1
+# ADD messageReceivedCount, 1
+# ADDE availableVanList, RCV.sender
 # EBLOCK
 # EACTION
 # EBEHAV
-#----------------------------------------------------------------------------------------------
 
-BEHAV OnVanIsFree, msg_rcv, VanFree, Inform
-ACTION AddVanToList, modify_self
-ADDE availableVanList, RCV.sender
-EACTION
-EBEHAV
+# BEHAV OnVanIsFree, msg_rcv, VanFree, Inform
+# ACTION AddVanToList, modify_self
+# ADDE availableVanList, RCV.sender
+# EACTION
+# EBEHAV
+#----------------------------------------------------------------------------------------------
 
 BEHAV OnVanIsFull, msg_rcv, VanFull, Inform
 ACTION DeleteVanFromList, modify_self
@@ -202,10 +204,6 @@ LEN listLength, availableVanList
 IEQ listLength, 0
 SET SEND.accepted, 0
 SET SEND.vanId, "test"
-SET SEND.price, 0
-SET SEND.distance, 0
-SET SEND.travelTime, 0
-SET SEND.score, 0
 EBLOCK
 
 IGT listLength, 0
@@ -213,18 +211,14 @@ RAND randomNumber, int, uniform, 0, listLength
 LR listElement, availableVanList, randomNumber
 SET SEND.accepted, 1
 SET SEND.vanId, listElement
-SET SEND.price, 1 # TODO: change parameters to real ones
-SET SEND.distance, 1 # TODO: change parameters to real ones
-SET SEND.travelTime, 1 # TODO: change parameters to real ones
-SET SEND.score, 1 # TODO: change parameters to real ones
 EBLOCK
 EACTION
 EBEHAV
 
 BEHAV OnVanGotToDestination, msg_rcv, VanGotToDestination, Inform
 ACTION ModifyEarningRate, modify_self
-decl newEarningRate,float,RCV.earning
-DIV newEarningRate,RCV.passengersTravelled
+decl newEarningRate, float, RCV.earning
+DIV newEarningRate, RCV.passengersTravelled
 IGT newEarningRate, earningRate
 SET earningRate, newEarningRate
 EBLOCK
@@ -236,30 +230,30 @@ EAGENT
 
 
 AGENT VanAgent
-PRM companyEnum,enum,C1,20,C2,20,C3,20,C4,20,C5,20
-PRM companyEnumFloat,float,init,0
-PRM companyList,list,conn
+PRM companyEnum, enum, C1, 20, C2, 20, C3, 20, C4, 20, C5, 20
+PRM companyEnumFloat, float, init, 0
+PRM companyList, list, conn
 
-PRM score,float,init,10
-PRM type,enum,Basic,50,Premium,50
-PRM minimalPrice,float,init,0
+PRM score, float, init, 10
+PRM type, enum, Basic, 50, Premium, 50
+PRM minimalPrice, float, init, 0
 
-PRM locationVertex,float,init,0  #TODO: SHOULD BE UNIFORM DIST
-PRM locationLine, enum, L0,25, L1,25, L2,25, L3,25
+PRM locationLine, enum, L0, 25, L1, 25, L2, 25, L3, 25
 PRM locationLineFloat, float, init, 0
+PRM locationVertex, float, init, 0  #TODO: SHOULD BE UNIFORM DIST
+
 PRM destinationLineFloat, float, init, 0
+PRM distanceThreshold, float, init, 10 #TODO: SHOULD BE UNIFORM DIST
+PRM currentDestinationVertex, float, init, 0
+PRM currentDestinationLineFloat, float, init, 0
+
 PRM linesList, list, conn
-PRM distanceThreshold,float,init,10 #TODO: SHOULD BE UNIFORM DIST
-PRM currentDestinationVertex,float, init,0
-PRM currentDestinationLineFloat,float, init,0
 
-PRM vanMoveDelay,float, init,INITVANMOVEDELAY
-PRM carriedPassengers,list,conn
+PRM vanMoveDelay, float, init, INITVANMOVEDELAY
+PRM carriedPassengers, list, conn
 PRM maxPassengers, float, init, MAXPASSENGERS
-PRM travellingFlag,float,init,0
-
-
-PRM pricePerVertex,float, init, INITPRICEPERVERTEX
+PRM travellingFlag, float, init, 0
+PRM pricePerVertex, float, init, INITPRICEPERVERTEX
 
 BEHAV VanSetup, setup
 ACTION ConvertEnumToFloat, modify_self
@@ -278,31 +272,31 @@ EBLOCK
 EACTION
 EBEHAV
 
-BEHAV VanBelongsToCompanySetup,msg_rcv,VanBelongsToCompany,Request
-ACTION ConvertEnumToFloat,modify_self
-IEQ companyEnum,C1
-SET companyEnumFloat,1
+BEHAV VanBelongsToCompanySetup, msg_rcv, VanBelongsToCompany, Request
+ACTION ConvertEnumToFloat, modify_self
+IEQ companyEnum, C1
+SET companyEnumFloat, 1
 EBLOCK
-IEQ companyEnum,C2
-SET companyEnumFloat,2
+IEQ companyEnum, C2
+SET companyEnumFloat, 2
 EBLOCK
-IEQ companyEnum,C3
-SET companyEnumFloat,3
+IEQ companyEnum, C3
+SET companyEnumFloat, 3
 EBLOCK
-IEQ companyEnum,C4
-SET companyEnumFloat,4
+IEQ companyEnum, C4
+SET companyEnumFloat, 4
 EBLOCK
-IEQ companyEnum,C5
-SET companyEnumFloat,5
+IEQ companyEnum, C5
+SET companyEnumFloat, 5
 EBLOCK
 EACTION
-ACTION SendResponse,send_msg,VanBelongsToCompanyResponse,Request
-IEQ RCV.companyEnum,companyEnumFloat
-SET SEND.belongs,1
-ADDE companyList,RCV.sender
+ACTION SendResponse, send_msg, VanBelongsToCompanyResponse, Request
+IEQ RCV.companyEnum, companyEnumFloat
+SET SEND.belongs, 1
+ADDE companyList, RCV.sender
 EBLOCK
-INEQ RCV.companyEnum,companyEnumFloat
-SET SEND.belongs,0
+INEQ RCV.companyEnum, companyEnumFloat
+SET SEND.belongs, 0
 EBLOCK
 SEND RCV.sender
 EACTION
@@ -315,18 +309,18 @@ EACTION
 EBEHAV
 
 #-----------------------------------------------------------------------------------------------------
-# BEHAV OnVanIsAvailable,msg_rcv,VanIsAvailable,Request
-# ACTION VanIsAvailableAction,send_msg,VanIsAvailableResponse,Inform
+# BEHAV OnVanIsAvailable, msg_rcv, VanIsAvailable, Request
+# ACTION VanIsAvailableAction, send_msg, VanIsAvailableResponse, Inform
 # decl distanceFromDestination, float, 0
 # ADD distanceFromDestination, RCV.destinationVertex
 # SUBT distanceFromDestination, locationVertex
-# SET SEND.available,0
+# SET SEND.available, 0
 # ILTEQ distanceFromDestination, distanceThreshold
-# SET distanceFromDestination,0
+# SET distanceFromDestination, 0
 # ADD distanceFromDestination, RCV.locationVertex
 # SUBT distanceFromDestination, locationVertex
 # ILTEQ distanceFromDestination, distanceThreshold
-# SET SEND.available,1
+# SET SEND.available, 1
 # EBLOCK
 # EBLOCK
 # SEND RCV.sender
@@ -337,42 +331,51 @@ EBEHAV
 BEHAV MoveVan, cyclic, INITVANMOVEDELAY
 ACTION ChangeVanLocationVertex, modify_self
 IGT currentDestinationVertex, locationVertex
-ADD locationVertex,1
+ADD locationVertex, 1
 EBLOCK
-ILT currentDestinationVertex,locationVertex
-SUBT locationVertex,1
+ILT currentDestinationVertex, locationVertex
+SUBT locationVertex, 1
 EBLOCK
 EACTION
 EBEHAV
 
-#-----------------------------------------------------------------------------------------------------
 BEHAV OnPassengerBookVan, msg_rcv, PassengerBookVan, Request
 ACTION PassengerChoseMe, modify_self
 IGT RCV.destinationVertex, currentDestinationVertex
-SET currentDestinationVertex,RCV.destinationVertex
+SET currentDestinationVertex, RCV.destinationVertex
 EBLOCK
-ADDE carriedPassengers,RCV.sender
+ADDE carriedPassengers, RCV.sender
+EACTION
+EBEHAV
+
+BEHAV CheckVanFull, cyclic, CYCLICCHECK
+ACTION CheckVanFullAction, send_msg, VanFull, Inform
+DECL listLength, float, 0
+LEN listLength, carriedPassengers
+IEQ listLength, maxPassengers
+SEND companyList
+EBLOCK
 EACTION
 EBEHAV
 EAGENT
-#-----------------------------------------------------------------------------------------------------
+
 
 AGENT PassengerAgent
-PRM locationLine, enum, L0,25, L1,25, L2,25, L3,25
+PRM locationLine, enum, L0, 25, L1, 25, L2, 25, L3, 25
 PRM locationLineFloat, float, init, 0
 PRM locationVertex, float, dist, uniform, 0, 50 #TODO: must be int here
 
-PRM destinationLine, enum, L0,25, L1,25, L2,25, L3,25
+PRM destinationLine, enum, L0, 25, L1, 25, L2, 25, L3, 25
 PRM destinationLineFloat, float, init, 0 #TODO: must be int here
 PRM destinationVertex, float, dist, uniform, 0, 50
 
 PRM pricePreference, float, init, 0 #TODO: unifrom dist
 PRM scorePreference, float, init, 0 #TODO: unifrom dist
 
-PRM isTravelling, float, init,0
+PRM isTravelling, float, init, 0
 PRM availableVan, list, conn
 
-PRM randomDecider, float, dist, uniform, 0, 1
+PRM refuseDecider, float, init, 0
 
 BEHAV PassengerSetup, setup
 ACTION ConvertEnumToFloat, modify_self
@@ -402,7 +405,9 @@ IEQ destinationLine, L3
 SET destinationLineFloat, 3
 EBLOCK
 EACTION
+EBEHAV
 
+BEHAV SendMessageToAll, one_time, 2
 ACTION SendMessageToAll, send_msg, PassengerRequest, Request
 SET SEND.destinationLineFloat, destinationLineFloat
 SET SEND.destinationVertex, destinationVertex
@@ -414,25 +419,13 @@ EBEHAV
 
 BEHAV OnOfferFromCompanyReceive, msg_rcv, PassengerRequestResponse, Inform
 ACTION SendMessageToVan, send_msg, PassengerBookVan, Request
-DECL acceptFlag, float, 0
-DECL pricePerVertex, float, 0
 IEQ RCV.accepted, 1
-SET pricePerVertex, RCV.price
-DIV pricePerVertex, RCV.distance
-IGTEQ RCV.score, 3
-SET acceptFlag, 1
-EBLOCK
-ILTEQ pricePerVertex, 1
-SET acceptFlag, 1
-EBLOCK
-IEQ acceptFlag, 1
 ADDE availableVan, RCV.vanId
 SET SEND.destinationLineFloat, destinationLineFloat
 SET SEND.destinationVertex, destinationVertex
 SET SEND.locationLineFloat, locationLineFloat
 SET SEND.locationVertex, locationVertex
 SEND availableVan
-EBLOCK
 EBLOCK
 EACTION
 
@@ -448,18 +441,41 @@ EACTION
 EBEHAV
 
 BEHAV OnOfferFromVanReceive, msg_rcv, PassengerBookVanResponse, Inform
+
 ACTION SendConfirmation, send_msg, SendConfirmationToVan, Inform
+DECL acceptFlag, float, 0
+DECL pricePerVertex, float, 0
 IEQ RCV.accepted, 1
-IGTEQ randomDecider, 0.5
-send RCV.sender
+SET pricePerVertex, RCV.price
+DIV pricePerVertex, RCV.distance
+IGTEQ RCV.score, 3
+SET acceptFlag, 1
+EBLOCK
+ILTEQ pricePerVertex, 1
+SET acceptFlag, 1
+EBLOCK
+IEQ acceptFlag, 1
+SET isTravelling, 1
+SEND RCV.sender
 EBLOCK
 EBLOCK
 EACTION
 
 ACTION SendRefusal, send_msg, SendRefusalToVan, Inform
+DECL refuseFlag, float, 0
+DECL pricePerVertex, float, 0
 IEQ RCV.accepted, 1
-ILT randomDecider, 0.5
-send RCV.sender
+SET pricePerVertex, RCV.price
+DIV pricePerVertex, RCV.distance
+ILT RCV.score, 3
+SET refuseFlag, 1
+EBLOCK
+IGT pricePerVertex, 1
+SET refuseFlag, 1
+EBLOCK
+IEQ refuseFlag, 1
+SET refuseDecider, 1
+SEND RCV.sender
 EBLOCK
 EBLOCK
 EACTION
@@ -472,12 +488,20 @@ SET SEND.locationLineFloat, locationLineFloat
 SET SEND.locationVertex, locationVertex
 SEND connections
 EBLOCK
+IEQ refuseDecider, 1
+SET SEND.destinationLineFloat, destinationLineFloat
+SET SEND.destinationVertex, destinationVertex
+SET SEND.locationLineFloat, locationLineFloat
+SET SEND.locationVertex, locationVertex
+SEND connections
+EBLOCK
 EACTION
 EBEHAV
 
 
 BEHAV OnMoveVanNewPassengerLocation, msg_rcv, MoveVanNewPassengerLocation, Inform
 ACTION ChangeLocation, modify_self
+IEQ isTravelling, 1
 SET locationLineFloat, RCV.locationLineFloat
 SET locationVertex, RCV.locationVertex
 EACTION
@@ -493,6 +517,7 @@ EBLOCK
 EBLOCK
 SEND RCV.sender
 EACTION
+EBLOCK
 EBEHAV
 
 BEHAV OnAcceptNewPassenger, msg_rcv, AcceptNewPassenger, Request
