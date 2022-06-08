@@ -504,20 +504,22 @@ ACTION ChangeLocation, modify_self
 IEQ isTravelling, 1
 SET locationLineFloat, RCV.locationLineFloat
 SET locationVertex, RCV.locationVertex
+EBLOCK
 EACTION
 
 ACTION CheckIfAtDestination, send_msg, PassengerAtDestination, Inform
+IEQ isTravelling, 1
 IEQ locationLineFloat, destinationLineFloat
 IEQ locationVertex, destinationVertex
 SET SEND.atDestination, 0
 SET SEND.score, 0
 SET SEND.pricePaid, 0
 ## TODO: Increase price per move, VanAgent needs to send to PassengerAgent price per move, then it needs to be stored in PassengerAgent and added here
-EBLOCK
-EBLOCK
 SEND RCV.sender
-EACTION
 EBLOCK
+EBLOCK
+EBLOCK
+EACTION
 EBEHAV
 
 BEHAV OnAcceptNewPassenger, msg_rcv, AcceptNewPassenger, Request
