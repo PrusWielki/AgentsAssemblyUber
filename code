@@ -37,7 +37,7 @@ EMESSAGE
 
 MESSAGE PassengerRequestResponse,Inform
 PRM accepted, float
-PRM vanId, float # TODO: later jid
+PRM vanId, conn # TODO: later jid
 PRM price, float
 PRM distance, float
 PRM travelTime, float
@@ -99,11 +99,14 @@ EMESSAGE
 
 AGENT CompanyAgent
 PRM companyId, float, dist, uniform, 0, 10
-PRM earningRate, float, init, 0
-PRM vanList, list, conn
-PRM availableVanList, list, conn
 PRM companyEnum, enum, C1, 20, C2, 20, C3, 20, C4, 20, C5, 20
 PRM companyEnumFloat, float, init, 0
+
+PRM vanList, list, conn
+PRM availableVanList, list, conn
+
+PRM earningRate, float, init, 0
+
 PRM messageReceivedCount, float, init, 0
 PRM messageReceivedCountThreshold, float, init, MESSAGETHRESHOLD
 PRM sendMessageToPassengerFlag, float, init, 0
@@ -206,7 +209,7 @@ LEN listLength, availableVanList
 
 IEQ listLength, 0
 SET SEND.accepted, 0
-SET SEND.vanId, 0
+SET SEND.vanId, "test"
 SET SEND.price, 0
 SET SEND.distance, 0
 SET SEND.travelTime, 0
@@ -223,13 +226,8 @@ SET SEND.distance, 1 # TODO: change parameters to real ones
 SET SEND.travelTime, 1 # TODO: change parameters to real ones
 SET SEND.score, 1 # TODO: change parameters to real ones
 EBLOCK
-
 EACTION
 EBEHAV
-
-
-
-
 
 BEHAV OnVanGotToDestination, msg_rcv, VanGotToDestination, Inform
 ACTION ModifyEarningRate, modify_self
@@ -240,7 +238,6 @@ SET earningRate, newEarningRate
 EBLOCK
 EACTION
 EBEHAV
-
 EAGENT
 
 
@@ -383,7 +380,7 @@ PRM scorePreference, float, init, 0 #TODO: unifrom dist
 PRM isTravelling, float, init,0
 PRM availableVan, list, conn
 
-PRM randomDecider, float, dist, uniform, 0, 1 #TODO: must be int
+PRM randomDecider, float, dist, uniform, 0, 1
 
 BEHAV PassengerSetup, setup
 ACTION ConvertEnumToFloat, modify_self

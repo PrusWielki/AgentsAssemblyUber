@@ -1,0 +1,18 @@
+#-----------------------------------------------------------------------------------------------------
+# Messages for Line Agent
+
+MESSAGE SendIntersectionPoint, Inform
+PRM line, float
+PRM vertex, float
+EMESSAGE
+
+MESSAGE RequestIntersectionPoint, Request
+PRM line, float
+PRM vertex, float
+EMESSAGE
+
+MESSAGE LineBelongsToVan,Request
+EMESSAGE
+
+#-----------------------------------------------------------------------------------------------------
+

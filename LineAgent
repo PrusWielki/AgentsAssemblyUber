@@ -1,18 +1,5 @@
 %CONST NUMBERINTERSECTIONS, 2
 
-MESSAGE SendIntersectionPoint, Inform
-PRM line, float
-PRM vertex, float
-EMESSAGE
-
-MESSAGE RequestIntersectionPoint, Request
-PRM line, float
-PRM vertex, float
-EMESSAGE
-
-MESSAGE LineBelongsToVan,Request
-EMESSAGE
-
 AGENT LineAgent
 PRM lineNumber, enum, L0,25, L1,25, L2,25, L3,25
 PRM lineNumberFloat, float, init, 0
