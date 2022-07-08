@@ -217,7 +217,7 @@ EBEHAV
 
 BEHAV OnVanGotToDestination, msg_rcv, VanGotToDestination, Inform
 ACTION ModifyEarningRate, modify_self
-decl newEarningRate, float, RCV.earning
+DECL newEarningRate, float, RCV.earning
 DIV newEarningRate, RCV.passengersTravelled
 IGT newEarningRate, earningRate
 SET earningRate, newEarningRate

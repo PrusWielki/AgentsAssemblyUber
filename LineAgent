@@ -1,7 +1,7 @@
 %CONST NUMBERINTERSECTIONS, 2
 
 AGENT LineAgent
-PRM lineNumber, enum, L0,25, L1,25, L2,25, L3,25
+PRM lineNumber, enum, L0, 25, L1, 25, L2, 25, L3, 25
 PRM lineNumberFloat, float, init, 0
 PRM lineLength, float, init, 50
 PRM intersectionVertices, list, float
