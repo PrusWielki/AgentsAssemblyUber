@@ -3,6 +3,7 @@
 %CONST MAXPASSENGERS, 5
 %CONST INITPRICEPERVERTEX, 2
 %CONST CYCLICCHECK, 1
+%CONST LINELENGTH, 49
 
 MESSAGE VanBelongsToCompany, Request
 PRM companyEnum, float
@@ -234,18 +235,21 @@ PRM companyEnum, enum, C1, 20, C2, 20, C3, 20, C4, 20, C5, 20
 PRM companyEnumFloat, float, init, 0
 PRM companyList, list, conn
 
-PRM score, float, init, 10
-PRM type, enum, Basic, 50, Premium, 50
-PRM minimalPrice, float, init, 0
+PRM score, float, init, 5
+# PRM type, enum, Basic, 50, Premium, 50 - #TODO: MAYBE ADD IN THE FUTURE
+# PRM minimalPrice, float, init, 0 #TODO
 
 PRM locationLine, enum, L0, 25, L1, 25, L2, 25, L3, 25
 PRM locationLineFloat, float, init, 0
-PRM locationVertex, float, init, 0  #TODO: SHOULD BE UNIFORM DIST
+PRM locationVertex, float, init, 0
 
-PRM destinationLineFloat, float, init, 0
-PRM distanceThreshold, float, init, 10 #TODO: SHOULD BE UNIFORM DIST
+# PRM destinationLineFloat, float, init, 0
+# PRM distanceThreshold, float, init, 10 #TODO: SHOULD BE UNIFORM DIST
 PRM currentDestinationVertex, float, init, 0
 PRM currentDestinationLineFloat, float, init, 0
+PRM intersectionVertex, float, init, 0
+PRM afterIntersectionVertex, float, init, 0
+PRM afterIntersectionLineFloat, init, 0
 
 PRM linesList, list, conn
 
@@ -253,9 +257,17 @@ PRM vanMoveDelay, float, init, INITVANMOVEDELAY
 PRM carriedPassengers, list, conn
 PRM maxPassengers, float, init, MAXPASSENGERS
 PRM travellingFlag, float, init, 0
-PRM pricePerVertex, float, init, INITPRICEPERVERTEX
+PRM pricePerVertex, float, init, 0
+
+PRM sumOfScores, float, init, 0 #TODO
+PRM sumOfTrips, float, init, 0 #TODO
 
 BEHAV VanSetup, setup
+ACTION GenerateParameters, modify_self
+RAND locationVertex, int, uniform, 0, LINELENGTH
+RAND pricePerVertex, float, uniform, 0, 1
+EACTION
+
 ACTION ConvertEnumToFloat, modify_self
 IEQ locationLine, L0
 SET locationLineFloat, 0
@@ -363,21 +375,29 @@ EAGENT
 AGENT PassengerAgent
 PRM locationLine, enum, L0, 25, L1, 25, L2, 25, L3, 25
 PRM locationLineFloat, float, init, 0
-PRM locationVertex, float, dist, uniform, 0, 50 #TODO: must be int here
+PRM locationVertex, float, init, 0
 
 PRM destinationLine, enum, L0, 25, L1, 25, L2, 25, L3, 25
-PRM destinationLineFloat, float, init, 0 #TODO: must be int here
-PRM destinationVertex, float, dist, uniform, 0, 50
+PRM destinationLineFloat, float, init, 0
+PRM destinationVertex, float, init, 0
 
-PRM pricePreference, float, init, 0 #TODO: unifrom dist
-PRM scorePreference, float, init, 0 #TODO: unifrom dist
+PRM pricePreference, float, init, 0
+PRM scorePreference, float, init, 0
 
 PRM isTravelling, float, init, 0
 PRM availableVan, list, conn
 
 PRM refuseDecider, float, init, 0
+PRM refusalCounter, float, init, 1
 
 BEHAV PassengerSetup, setup
+ACTION GenerateVertexPosition, modify_self
+RAND locationVertex, int, uniform, 0, LINELENGTH
+RAND destinationVertex, int, uniform, 0, LINELENGTH
+RAND pricePreference, float, uniform, 0, 1
+RAND scorePreference, float, uniform, 1, 5
+EACTION
+
 ACTION ConvertEnumToFloat, modify_self
 IEQ locationLine, L0
 SET locationLineFloat, 0
@@ -448,10 +468,10 @@ DECL pricePerVertex, float, 0
 IEQ RCV.accepted, 1
 SET pricePerVertex, RCV.price
 DIV pricePerVertex, RCV.distance
-IGTEQ RCV.score, 3
+IGTEQ RCV.score, scorePreference
 SET acceptFlag, 1
 EBLOCK
-ILTEQ pricePerVertex, 1
+ILTEQ pricePerVertex, pricePreference
 SET acceptFlag, 1
 EBLOCK
 IEQ acceptFlag, 1
@@ -467,10 +487,10 @@ DECL pricePerVertex, float, 0
 IEQ RCV.accepted, 1
 SET pricePerVertex, RCV.price
 DIV pricePerVertex, RCV.distance
-ILT RCV.score, 3
+ILT RCV.score, scorePreference
 SET refuseFlag, 1
 EBLOCK
-IGT pricePerVertex, 1
+IGT pricePerVertex, pricePreference
 SET refuseFlag, 1
 EBLOCK
 IEQ refuseFlag, 1
@@ -489,11 +509,14 @@ SET SEND.locationVertex, locationVertex
 SEND connections
 EBLOCK
 IEQ refuseDecider, 1
+ILTEQ refusalCounter, 5
 SET SEND.destinationLineFloat, destinationLineFloat
 SET SEND.destinationVertex, destinationVertex
 SET SEND.locationLineFloat, locationLineFloat
 SET SEND.locationVertex, locationVertex
 SEND connections
+ADD refusalCounter, 1
+EBLOCK
 EBLOCK
 EACTION
 EBEHAV

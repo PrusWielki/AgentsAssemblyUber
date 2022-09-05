@@ -1,5 +1,19 @@
 %CONST NUMBERINTERSECTIONS, 2
 
+MESSAGE SendIntersectionPoint, Inform
+PRM line, float
+PRM vertex, float
+EMESSAGE
+
+MESSAGE RequestIntersectionPoint, Request
+PRM locationLineFloat, float
+PRM locationVertex, float
+PRM destinationLineFloat, float
+EMESSAGE
+
+MESSAGE LineBelongsToVan,Request
+EMESSAGE
+
 AGENT LineAgent
 PRM lineNumber, enum, L0, 25, L1, 25, L2, 25, L3, 25
 PRM lineNumberFloat, float, init, 0
@@ -24,10 +38,10 @@ EBLOCK
 EACTION
 
 ACTION AssignIntersections, modify_self
-DECL counterIntersections, float 0
-DECL even, float 1
-DECL base, float lineNumberFloat
-DECL result, float 1
+DECL counterIntersections, float, 0
+DECL even, float, 1
+DECL base, float, lineNumberFloat
+DECL result, float, 1
 ADDE intersectionVertices, 5
 ADDE intersectionVertices, 45
 
@@ -73,18 +87,22 @@ DECL distance, float, 1000
 DECL temp, float, 0
 DECL checkFlag, float, 1
 
+IEQ lineNumberFloat, RCV.locationLineFloat
 WNEQ counter, NUMBERINTERSECTIONS
-lr line, intersectionLines, counter
-lr vertex, intersectionVertices, counter
-IEQ line, RCV.line
+LR line, intersectionLines, counter
+LR vertex, intersectionVertices, counter
+IEQ line, RCV.destinationLineFloat
 SET SEND.line, line
 SET SEND.vertex, vertex
 SEND RCV.sender
 SET checkFlag, 0
 EBLOCK
-INEQ line, RCV.line
+INEQ line, RCV.destinationLineFloat
 SET temp, vertex
-SUBT temp, RCV.vertex # modulo
+SUBT temp, RCV.locationVertex # modulo
+ILT temp, 0
+MULT temp, -1
+EBLOCK
 ILT temp, distance
 SET SEND.line, line
 SET SEND.vertex, vertex
@@ -95,6 +113,7 @@ ADD counter, 1
 EBLOCK
 IEQ checkFlag, 1
 SEND RCV.sender
+EBLOCK
 EBLOCK
 EACTION
 EBEHAV
