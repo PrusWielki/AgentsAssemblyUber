@@ -377,6 +377,19 @@ EBLOCK
 ILT currentDestinationVertex, locationVertex
 SUBT locationVertex, 1
 EBLOCK
+IEQ locationVertex, currentDestinationVertex
+SET askForIntersectionFlag, 1
+DECL line, float, 0
+DECL vertex, float, 0
+LR line, listOfPassengersDestinationsLines, 0
+LR vertex, listOfPassengersDestinationsVertices, 0
+REME listOfPassengersDestinationsLines, line
+REME listOfPassengersDestinationsVertices, vertex
+LR line, listOfPassengersDestinationsLines, 0
+LR vertex, listOfPassengersDestinationsVertices, 0
+SET currentDestinationLineFloat, line
+SET currentDestinationVertex, vertex
+EBLOCK
 EBLOCK
 INEQ locationLineFloat, currentDestinationLineFloat
 IGT intersectionVertex, locationVertex
@@ -410,25 +423,25 @@ EBEHAV
 
 BEHAV OnPassengerAtDestination, msg_rcv, PassengerAtDestination, Inform
 ACTION RemovePassengerAction, modify_self
-DECL line, float, 0
-DECL vertex, float, 0
-LR line, listOfPassengersDestinationsLines, 0
-LR vertex, listOfPassengersDestinationsVertices, 0
 REME carriedPassengers, RCV.sender
-REME listOfPassengersDestinationsLines, line
-REME listOfPassengersDestinationsVertices, vertex
-LR line, listOfPassengersDestinationsLines, 0
-LR vertex, listOfPassengersDestinationsVertices, 0
-SET currentDestinationLineFloat, line
-SET currentDestinationVertex, vertex
+# DECL line, float, 0
+# DECL vertex, float, 0
+# LR line, listOfPassengersDestinationsLines, 0
+# LR vertex, listOfPassengersDestinationsVertices, 0
+# REME listOfPassengersDestinationsLines, line
+# REME listOfPassengersDestinationsVertices, vertex
+# LR line, listOfPassengersDestinationsLines, 0
+# LR vertex, listOfPassengersDestinationsVertices, 0
+# SET currentDestinationLineFloat, line
+# SET currentDestinationVertex, vertex
 EACTION
 
-ACTION AskForNewIntersectionAction, send_msg, RequestIntersectionPoint, Request
-SET SEND.locationLineFloat, locationLineFloat
-SET SEND.locationVertex, locationVertex
-SET SEND.destinationLineFloat, currentDestinationLineFloat
-SEND linesList
-EACTION
+# ACTION AskForNewIntersectionAction, send_msg, RequestIntersectionPoint, Request
+# SET SEND.locationLineFloat, locationLineFloat
+# SET SEND.locationVertex, locationVertex
+# SET SEND.destinationLineFloat, currentDestinationLineFloat
+# SEND linesList
+# EACTION
 EBEHAV
 
 BEHAV OnSendIntersectionPoint, msg_rcv, SendIntersectionPoint, Inform
