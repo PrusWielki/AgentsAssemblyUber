@@ -288,6 +288,11 @@ PRM pricePerVertex, float, init, 0
 PRM sumOfScores, float, init, 0 #TODO
 PRM sumOfTrips, float, init, 0 #TODO
 PRM askForIntersectionFlag, float, init, 0
+PRM newPassengerRequestFlag, float, init, 0
+PRM newPassengerHelperFlag, float, init, 0
+PRM newPassengerRequestJid, list, conn
+PRM newPassengerRequestAcceptMessages, list, conn
+
 PRM listOfPassengersDestinationsLines, list, float
 PRM listOfPassengersDestinationsVertices, list, float
 
@@ -469,13 +474,16 @@ DECL travelTime, float, 0
 RAND price, float, uniform, 20, 30
 RAND distance, float, uniform, 20, 30
 RAND travelTime, float, uniform, 20, 30
+IEQ newPassengerRequestFlag, 0
 ILT listLength, maxPassengers
-SET SEND.accepted, 1
-SET SEND.price, price
-SET SEND.distance, distance
-SET SEND.travelTime, travelTime
-SET SEND.score, score
-SEND RCV.sender
+ADDE newPassengerRequestJid, RCV.sender
+SET newPassengerRequestFlag, 1
+# SET SEND.accepted, 1
+# SET SEND.price, price
+# SET SEND.distance, distance
+# SET SEND.travelTime, travelTime
+# SET SEND.score, score
+# SEND RCV.sender
 EBLOCK
 IEQ listLength, maxPassengers
 SET SEND.accepted, 0
@@ -485,6 +493,84 @@ SET SEND.travelTime, travelTime
 SET SEND.score, score
 SEND RCV.sender
 EBLOCK
+EBLOCK
+IEQ newPassengerRequestFlag, 1
+SET SEND.accepted, 0
+SET SEND.price, price
+SET SEND.distance, distance
+SET SEND.travelTime, travelTime
+SET SEND.score, score
+SEND RCV.sender
+EBLOCK
+EACTION
+EBEHAV
+
+BEHAV OnNewPassengerCheck, cyclic, 5
+ACTION AskPassengersInsideAction, send_msg, AcceptNewPassenger, Request
+IEQ newPassengerRequestFlag, 1
+SEND carriedPassengers
+EBLOCK
+EACTION
+
+ACTION PassengerBookVanAction, send_msg, PassengerBookVanResponse, Inform
+IEQ newPassengerHelperFlag, 1
+IEQ newPassengerRequestFlag, 1
+DECL listLength, float, 0
+DECL listLengthMessages, float, 0
+LEN listLength, carriedPassengers
+LEN listLengthMessages, newPassengerRequestAcceptMessages
+DECL price, float, 0
+DECL distance, float, 0
+DECL travelTime, float, 0
+RAND price, float, uniform, 20, 30
+RAND distance, float, uniform, 20, 30
+RAND travelTime, float, uniform, 20, 30
+IEQ listLengthMessages, listLength
+ILT listLength, maxPassengers
+SET SEND.accepted, 1
+SET SEND.price, price
+SET SEND.distance, distance
+SET SEND.travelTime, travelTime
+SET SEND.score, score
+SEND newPassengerRequestJid
+EBLOCK
+IEQ listLength, maxPassengers
+SET SEND.accepted, 0
+SET SEND.price, price
+SET SEND.distance, distance
+SET SEND.travelTime, travelTime
+SET SEND.score, score
+SEND newPassengerRequestJid
+EBLOCK
+EBLOCK
+INEQ listLengthMessages, listLength
+SET SEND.accepted, 0
+SET SEND.price, price
+SET SEND.distance, distance
+SET SEND.travelTime, travelTime
+SET SEND.score, score
+SEND newPassengerRequestJid
+EBLOCK
+SET newPassengerRequestFlag, 0
+SET newPassengerHelperFlag, 0
+CLR newPassengerRequestJid
+CLR newPassengerRequestAcceptMessages
+EBLOCK
+EBLOCK
+EACTION
+
+EBEHAV
+
+BEHAV OnSendConfirmationToVanAboutNewPassenger, msg_rcv, SendConfirmationToVanAboutNewPassenger, Inform
+ACTION AddPassengerAction, modify_self
+ADDE newPassengerRequestAcceptMessages, RCV.sender
+SET newPassengerHelperFlag, 1
+EACTION
+EBEHAV
+
+BEHAV OnSendRefusalToVanAboutNewPassenger, msg_rcv, SendRefusalToVanAboutNewPassenger, Inform
+ACTION AddPassengerAction, modify_self
+SET newPassengerHelperFlag, 1
 EACTION
 EBEHAV
 
