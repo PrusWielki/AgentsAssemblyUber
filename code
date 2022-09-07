@@ -4,6 +4,7 @@
 %CONST INITPRICEPERVERTEX, 2
 %CONST CYCLICCHECK, 1
 %CONST LINELENGTH, 49
+%CONST ACCEPTNEWPASSENGERTHRESHOLD, 0.8
 
 MESSAGE VanBelongsToCompany, Request
 PRM companyEnum, float
@@ -71,8 +72,8 @@ MESSAGE SendRefusalToVan, Inform
 EMESSAGE
 
 MESSAGE AcceptNewPassenger, Request
-PRM additionalTime, float
-PRM reducedPrice, float
+# PRM additionalTime, float
+# PRM reducedPrice, float
 EMESSAGE
 
 MESSAGE SendConfirmationToVanAboutNewPassenger, Inform
@@ -533,6 +534,7 @@ PRM availableVan, list, conn
 
 PRM refuseDecider, float, init, 0
 PRM refusalCounter, float, init, 1
+PRM acceptNewPassengerDecider, float, init, 0
 
 BEHAV PassengerSetup, setup
 ACTION GenerateVertexPosition, modify_self
@@ -694,19 +696,26 @@ EBEHAV
 
 BEHAV OnAcceptNewPassenger, msg_rcv, AcceptNewPassenger, Request
 ACTION SendConfirmation, send_msg, SendConfirmationToVanAboutNewPassenger, Inform
-DECL decider, float, 0
-SET decider, RCV.additionalTime
-DIV decider, RCV.reducedPrice
-ILTEQ decider, 1 #TODO: maybe we can randomize it in the future
+RAND acceptNewPassengerDecider, float, uniform, 0, 1
+ILTEQ acceptNewPassengerDecider, ACCEPTNEWPASSENGERTHRESHOLD
 SEND RCV.sender
 EBLOCK
+# DECL decider, float, 0
+# SET decider, RCV.additionalTime
+# DIV decider, RCV.reducedPrice
+# ILTEQ decider, 1 #TODO: maybe we can randomize it in the future
+# SEND RCV.sender
+# EBLOCK
 EACTION
 
 ACTION SendRefusal, send_msg, SendRefusalToVanAboutNewPassenger, Inform
-DECL decider, float, 0
-SET decider, RCV.additionalTime
-DIV decider, RCV.reducedPrice
-IGT decider, 1 #TODO: maybe we can randomize it in the future
+# DECL decider, float, 0
+# SET decider, RCV.additionalTime
+# DIV decider, RCV.reducedPrice
+# IGT decider, 1 #TODO: maybe we can randomize it in the future
+# SEND RCV.sender
+# EBLOCK
+IGT acceptNewPassengerDecider, ACCEPTNEWPASSENGERTHRESHOLD
 SEND RCV.sender
 EBLOCK
 EACTION
