@@ -95,9 +95,9 @@ PRM passengersTravelled, float
 EMESSAGE
 
 MESSAGE PassengerAtDestination, Inform
-PRM atDestination, float
+# PRM atDestination, float
 PRM score, float
-PRM pricePaid, float
+# PRM pricePaid, float
 EMESSAGE
 
 MESSAGE MoveVanNewPassengerLocation, Inform
@@ -294,6 +294,7 @@ BEHAV OnVanSetup, setup
 ACTION GenerateParameters, modify_self
 RAND locationVertex, int, uniform, 0, LINELENGTH
 RAND pricePerVertex, float, uniform, 0, 1
+SET isTravelling, 1
 EACTION
 
 ACTION ConvertEnumToFloat, modify_self
@@ -423,7 +424,13 @@ EBEHAV
 
 BEHAV OnPassengerAtDestination, msg_rcv, PassengerAtDestination, Inform
 ACTION RemovePassengerAction, modify_self
+DECL newScore, float, 0
 REME carriedPassengers, RCV.sender
+ADD sumOfTrips, 1
+ADD sumOfScores, RCV.score
+SET newScore, sumOfScores
+DIV newScore, sumOfTrips
+SET score, newScore 
 # DECL line, float, 0
 # DECL vertex, float, 0
 # LR line, listOfPassengersDestinationsLines, 0
@@ -674,9 +681,9 @@ ACTION CheckIfAtDestination, send_msg, PassengerAtDestination, Inform
 IEQ isTravelling, 1
 IEQ locationLineFloat, destinationLineFloat
 IEQ locationVertex, destinationVertex
-SET SEND.atDestination, 0
+# SET SEND.atDestination, 0
 SET SEND.score, 0
-SET SEND.pricePaid, 0
+# SET SEND.pricePaid, 0
 ## TODO: Increase price per move, VanAgent needs to send to PassengerAgent price per move, then it needs to be stored in PassengerAgent and added here
 SEND RCV.sender
 EBLOCK
