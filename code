@@ -216,6 +216,8 @@ EBEHAV
 # EBEHAV
 #----------------------------------------------------------------------------------------------
 
+# When Van becomes full, it sends VanFull message to Company, so it can remove from either Basic or Premium list,
+# depennding on type of Van
 BEHAV OnVanIsFull, msg_rcv, VanFull, Inform
 ACTION DeleteVanFromList, modify_self
 IEQ RCV.typeFloat, 0
@@ -231,6 +233,8 @@ EBLOCK
 EACTION
 EBEHAV
 
+# When Van becomes free, it sends VanFree message to Company, so it can add it again to either Basic or Premium list,
+# depennding on type of Van
 BEHAV OnVanIsEmpty, msg_rcv, VanEmpty, Inform
 ACTION DeleteVanFromList, modify_self
 IEQ RCV.typeFloat, 0
@@ -246,6 +250,8 @@ EBLOCK
 EACTION
 EBEHAV
 
+# When passenger wants to have a ride it sends PassengerRequest message that specifies among others type of the Van (basic or premium),
+# then Van chooses a Van either from Premium or Basic list (randomly so far)
 BEHAV OnPassengerRequest, msg_rcv, PassengerRequest, Request
 ACTION SendResponseToPassenger, send_msg, PassengerRequestResponse, Inform
 DECL listLength, float, 0
@@ -395,6 +401,7 @@ SEND RCV.sender
 EACTION
 EBEHAV
 
+# When Van receives LineBelongsToVan message it adds the Line to the list
 BEHAV OnLineBelongsToVanSetup, msg_rcv, LineBelongsToVan, Request
 ACTION LineBelongsToVanAction, modify_self
 ADDE linesList, RCV.sender
@@ -421,6 +428,11 @@ EBEHAV
 # EBEHAV
 #-----------------------------------------------------------------------------------------------------
 
+# This behavior implements Van movement on the map and takes account different scenarios depending on which line the Van is 
+# and where it should get. locationVertex holds current position, currentDestinationVertex next destination point, 
+# intersectionVertex point of intersection. In turn listOfPassengersDestinationsVertices and listOfPassengersDestinationsLines
+# hold next destinations. When Van finally gets to current destination, this destination is also removed from both
+# listOfPassengersDestinationsVertices and listOfPassengersDestinationsLines and the next one is set as current destination
 BEHAV OnMoveVan, cyclic, MOVEINTERVAL
 ACTION ChangeVanLocationVertex, modify_self
 IEQ locationLineFloat, currentDestinationLineFloat
@@ -474,6 +486,8 @@ EBLOCK
 EACTION
 EBEHAV
 
+# When Passenger gets to destination it sends PassengerAtDestination message with the score, based on which Van updates its own score.
+# Van holds sum of scores and sum of trips variable, the resulting score is calculated by divding sum of scores by sum of trips
 BEHAV OnPassengerAtDestination, msg_rcv, PassengerAtDestination, Inform
 ACTION RemovePassengerAction, modify_self
 DECL newScore, float, 0
@@ -503,6 +517,7 @@ EACTION
 # EACTION
 EBEHAV
 
+# SendIntersectionPoint message is sent by Line Agent and contains information about next intersection
 BEHAV OnSendIntersectionPoint, msg_rcv, SendIntersectionPoint, Inform
 ACTION ModifyIntersectionPointsAction, modify_self
 SET afterIntersectionLineFloat, RCV.line
@@ -510,6 +525,9 @@ SET intersectionVertex, RCV.vertex
 EACTION
 EBEHAV
 
+# PassengerBookVan message is sent by new Passenger that wants to book a ride. If Van receives this message it contacts with the passengers
+# inside, if they agree or not (in that time new Passengers will be automatically rejected). If all passengers agree (they send SendConfirmationToVanAboutNewPassenger
+# message if they agree and SendRefusalToVanAboutNewPassenger if they don't agree) then new passenger is accepted
 BEHAV OnPassengerBookVan, msg_rcv, PassengerBookVan, Request
 ACTION PassengerBookVanAction, send_msg, PassengerBookVanResponse, Inform
 DECL listLength, float, 0
@@ -717,6 +735,7 @@ EBLOCK
 EACTION
 EBEHAV
 
+# At the beginning of its lifetime Passenger sends PassengerRequest to Company agent with the intention to book a ride
 BEHAV SendMessageToAll, one_time, 2
 ACTION SendMessageToAll, send_msg, PassengerRequest, Request
 SET SEND.destinationLineFloat, destinationLineFloat
@@ -728,6 +747,8 @@ SEND connections
 EACTION
 EBEHAV
 
+# Passenger receives PassengerRequestResponse message from Company with accepted parameter that determines
+# if there is a free Van or not, if there are no free Vans at the moment Passenger sends request one more time
 BEHAV OnOfferFromCompanyReceive, msg_rcv, PassengerRequestResponse, Inform
 ACTION SendMessageToVan, send_msg, PassengerBookVan, Request
 IEQ RCV.accepted, 1
@@ -752,6 +773,9 @@ EBLOCK
 EACTION
 EBEHAV
 
+# PassengerBookVanResponse message is sent by Van to the Passenger and informs him if he was accepted by other passengers or not
+# If Passenger was accepted then he makes final decision if he wants to ride or not (price per vertex has to be less than or equal to 1 
+# or score must be at least 3). If Passenger wasn't accepted he sends the request to the Company one more time
 BEHAV OnOfferFromVanReceive, msg_rcv, PassengerBookVanResponse, Inform
 
 ACTION SendConfirmation, send_msg, SendConfirmationToVan, Inform
@@ -819,6 +843,7 @@ EBLOCK
 EACTION
 EBEHAV
 
+# MoveVanNewPassengerLocation message is sent by Van and updates Passenger's position
 BEHAV OnMoveVanNewPassengerLocation, msg_rcv, MoveVanNewPassengerLocation, Inform
 ACTION ChangeLocation, modify_self
 IEQ isTravelling, 1
@@ -842,6 +867,9 @@ EBLOCK
 EACTION
 EBEHAV
 
+# AcceptNewPassenger message starts the communication with the Van regarding accepting new Passengers.
+# Passenger has predefined 80% chance to accept. If Passenger accepts it sends SendConfirmationToVanAboutNewPassenger
+# message otherwise it sends SendRefusalToVanAboutNewPassenger message
 BEHAV OnAcceptNewPassenger, msg_rcv, AcceptNewPassenger, Request
 ACTION SendConfirmation, send_msg, SendConfirmationToVanAboutNewPassenger, Inform
 RAND acceptNewPassengerDecider, float, uniform, 0, 1
